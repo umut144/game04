@@ -18,14 +18,15 @@ cardgame-ref/
 export_presets.cfg
 
 # --- .NET / C# -----------------------------------------------------------
-bin/
-obj/
+**/bin/
+**/obj/
 .mono/
-*.dll
-*.pdb
 *.user
 *.userprefs
 *.suo
+
+# --- the check watcher's answers -----------------------------------------
+.agent-check/
 
 # --- IDEs ----------------------------------------------------------------
 .idea/
@@ -33,3 +34,7 @@ obj/
 
 # --- macOS ---------------------------------------------------------------
 .DS_Store
+
+# _to_delete/ is deliberately NOT ignored: it stays untracked but visible, so
+# that it shows up in `git status` and gets emptied with `trash` at the end of
+# the day. Never stage it.
