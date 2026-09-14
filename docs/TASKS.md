@@ -19,6 +19,10 @@ row here that turns out to be a rule question moves to §15 instead.
 
 Read `AGENTS.md` first — its rules are what every row has to stay inside.
 
+**Where this stands.** Nothing is built yet. The design and the roadmap are
+written, the repository is set up, and the next step is the spec round for
+**G00 — Core and data model**, whose questions are the `CORE-*` rows below.
+
 ## Active Tasks
 
 | ID | Area | Outcome | Status |
@@ -44,6 +48,7 @@ Read `AGENTS.md` first — its rules are what every row has to stay inside.
 
 | ID | Area | Decision |
 |---|---|---|
+| `ENGINE-01` | Platform | **Godot 4 with a C# core**, decided 2026-09-14. Server cost, the developer's first concern, turned out not to be a factor: a turn-based card game's server is a command validator with no tick loop, so Rust's advantage lands on a base of a few dozen kilobytes per match. Three things decided it instead. PolyTools is Godot and exports `.tscn`, which Godot reads directly while Bevy needs the importer world01 had to build. The product is largely presentation — animation, shaders, layered card state — and Godot ships what would otherwise be built by hand. And for agent-driven work, Bevy's API churn and compile times cost more than C# gives up, which for a turn-based game with no concurrency is little. world01 stays Bevy; a MOBA with its own simulation is a different product. Note what this does *not* decide: the engine binds only the presentation half, because the rules live in an engine-free core. |
 | `WEB-01` | Platform | No browser client for now — the developer's goal is not the browser, which is what settled Godot with a C# core. The architecture keeps the door open rather than closing it: the client resolves no rules (`AGENTS.md`), so a thin client in another language could render snapshots without the rules engine ever shipping to it. Reopen only with the product decision, never as a technical drift. |
 
 ## Tracker rules
