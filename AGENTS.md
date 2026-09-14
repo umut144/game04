@@ -11,6 +11,8 @@ Before planning, discussing or changing anything:
 - `docs/GAME_DESIGN.md` — the rules. The source of truth for every mechanic,
   and §15 for what is deliberately still open.
 - `docs/ROADMAP.md` — the build order (gates G00–G10) and the working method.
+- `docs/TASKS.md` — the tracker. Check it before "fixing" something that looks
+  odd: it may already be a known finding with a decision attached.
 
 `concepts/` holds the hand-drawn references the design keeps pointing at: the
 board, the card surface, and the diegetic ability sketches.
@@ -101,6 +103,14 @@ are what an agent is pointed at first.
 - `docs/GAME_DESIGN.md` — rules. Sections marked EXPERIMENTAL are unfinished on
   purpose; §15 lists every question carried deliberately.
 - `docs/ROADMAP.md` — gates, and the working method above in full.
+- `docs/TASKS.md` — open, blocked and deliberately deferred work, plus the
+  settled decisions worth recording. Its own header explains what belongs there
+  rather than in the other two.
+
+Three documents, three kinds of open question, and they are not copied into each
+other: §15 holds open **rules**, the roadmap holds the **plan**, `TASKS.md`
+holds open **work**. Add a finding to the tracker rather than leaving it
+undocumented.
 
 When a gate answers a question, the answer goes into `GAME_DESIGN.md`. A
 decision that lives only in a commit message is a decision that will be made
