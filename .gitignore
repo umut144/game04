@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# The previous card game, kept on disk but deliberately out of this repository.
+#
+# cardgame-ref/ is the earlier attempt. Its game design is superseded; what was
+# worth keeping from its architecture is written down in docs/GAME_DESIGN.md §14.
+# The folder stays on the developer's machine as a read-only reference and is
+# not part of this project's history. A fresh clone will not have it.
+# ---------------------------------------------------------------------------
+cardgame-ref/
+
+# --- Godot ---------------------------------------------------------------
+.godot/
+/android/
+/build/
+/exports/
+*.translation
+# contains local paths and can carry signing secrets
+export_presets.cfg
+
+# --- .NET / C# -----------------------------------------------------------
+bin/
+obj/
+.mono/
+*.dll
+*.pdb
+*.user
+*.userprefs
+*.suo
+
+# --- IDEs ----------------------------------------------------------------
+.idea/
+.vs/
+
+# --- macOS ---------------------------------------------------------------
+.DS_Store
