@@ -68,6 +68,42 @@ public sealed class RepositoryAssetsTests
         Assert.Equal(-totem.MaxX, totem.MinX, 3);
     }
 
+    [Fact]
+    public void EveryComponentPivotIsWhereTheComponentsOriginLands()
+    {
+        // The contract's cross-check that vertices are pivot-relative: placing
+        // local (0, 0) must give the exported component_pivot, for every
+        // synced single game04 can read (asset references it does not draw
+        // yet, so those manifests are left out).
+        var root = Path.Combine(Root, "src", "Cardgame.Client", "assets", "polytools");
+        var manifests = Directory.EnumerateFiles(root, "manifest.json", SearchOption.AllDirectories).ToArray();
+        Assert.NotEmpty(manifests);
+
+        int checkedCount = 0;
+        foreach (string path in manifests)
+        {
+            string json = File.ReadAllText(path);
+            if (json.Contains("\"asset_reference\"", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var manifest = PolyToolsManifest.Parse(json, path);
+            checkedCount++;
+            foreach (var component in manifest.Components)
+            {
+                var pivot = component.ComponentPivot;
+                Assert.True(pivot is { Length: 2 }, $"{manifest.AssetKey}/{component.Name} has no component_pivot");
+                var (x, y) = AssetGeometry.OriginOf(manifest, component);
+                Assert.True(
+                    Math.Abs(x - pivot![0]) < 1e-4 && Math.Abs(y - pivot[1]) < 1e-4,
+                    $"{manifest.AssetKey}/{component.Name}: origin ({x}, {y}), component_pivot ({pivot[0]}, {pivot[1]})");
+            }
+        }
+
+        Assert.True(checkedCount > manifests.Length / 2, $"only {checkedCount} of {manifests.Length} manifests checked");
+    }
+
     private static string FindRepositoryRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)

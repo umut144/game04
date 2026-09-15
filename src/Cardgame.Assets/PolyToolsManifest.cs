@@ -117,6 +117,12 @@ public sealed record ManifestComponent
     public string? Kind { get; init; }
     public string? ParentComponentId { get; init; }
     public int ZIndex { get; init; }
+
+    /// <summary>
+    /// Read-only in the contract: the component's origin in asset meters,
+    /// i.e. where its local (0, 0) lands. Not a term of the placement.
+    /// </summary>
+    public double[]? ComponentPivot { get; init; }
     public required ManifestTransform LocalTransform { get; init; }
     public ManifestMesh? Mesh { get; init; }
     public ManifestMesh? ClosedRegionMesh { get; init; }

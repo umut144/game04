@@ -58,6 +58,28 @@ public sealed class AssetGeometry
     public float Width => MaxX - MinX;
     public float Height => MaxY - MinY;
 
+    /// <summary>
+    /// Where a component's local (0, 0) lands, in unscaled asset meters —
+    /// what PolyTools exports as <c>component_pivot</c>.
+    /// </summary>
+    public static (double X, double Y) OriginOf(PolyToolsManifest manifest, ManifestComponent component)
+    {
+        var byId = manifest.Components.ToDictionary(c => c.ComponentId);
+        var world = Affine2.Identity;
+        for (var current = component; ; current = byId[current.ParentComponentId])
+        {
+            var t = current.LocalTransform;
+            world = Affine2.FromTransform(t.Position[0], t.Position[1], t.RotationRadians, t.Scale[0], t.Scale[1]).Then(world);
+            if (current.ParentComponentId is null)
+            {
+                break;
+            }
+        }
+
+        var (x, y) = world.Apply(0, 0);
+        return (x - manifest.AssetPivot[0], y - manifest.AssetPivot[1]);
+    }
+
     public static AssetGeometry Build(PolyToolsManifest manifest, double scaleX, double scaleY)
     {
         var byId = manifest.Components.ToDictionary(component => component.ComponentId);
