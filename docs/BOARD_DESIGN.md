@@ -81,7 +81,7 @@ bottom margin     60px    ──────────────────
 Anywhere else at the same 16:10 aspect, multiply by (viewport width / 1920)
 — the fractions in `BoardLayoutSpec.cs` do this automatically.
 
-## Open, tracked in `docs/TASKS.md`
+## Notes
 
 - The 5:4 totem ratio is a target for all three totems, not a measurement of
   the exports; the Totem of Time carries one segment more than the other two
