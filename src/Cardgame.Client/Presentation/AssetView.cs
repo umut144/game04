@@ -5,15 +5,19 @@ using Godot;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// Draws one PolyTools asset inside this control: the asset's pivot sits at
-/// the bottom centre, and one meter of game04 geometry is
-/// <see cref="PixelsPerMeter"/> pixels, the same for everything on the board.
+/// Draws one PolyTools asset inside this control: one meter of game04
+/// geometry is <see cref="PixelsPerMeter"/> × <see cref="Fill"/> pixels, and
+/// the asset's pivot (bottom centre) sits so that an asset exactly as tall as
+/// the control is centred in it — the space <see cref="Fill"/> gives up is
+/// shared evenly around the asset.
 /// </summary>
 public partial class AssetView : Control
 {
     private ArrayMesh? _mesh;
 
     public Func<float> PixelsPerMeter { get; set; } = () => 1f;
+
+    public float Fill { get; set; } = 1f;
 
     public AssetView()
     {
@@ -34,11 +38,11 @@ public partial class AssetView : Control
             return;
         }
 
-        float scale = PixelsPerMeter();
+        float scale = PixelsPerMeter() * Fill;
         var transform = new Transform2D(
             new Vector2(scale, 0f),
             new Vector2(0f, -scale),
-            new Vector2(Size.X / 2f, Size.Y));
+            new Vector2(Size.X / 2f, Size.Y - Size.Y * (1f - Fill) / 2f));
         DrawMesh(_mesh, null!, transform);
     }
 

@@ -80,6 +80,21 @@ Colours, from the same file: cards have crystal-blue strokes, totems strokes in
 their own colour — Life bordeaux, Mana sky blue, Time emerald — and everything
 is filled paper white.
 
+## Breathing room
+
+Cards and totems are drawn at **96 %** of the size above, centred in their
+cells (`BoardLayoutSpec.AssetFill`), so their outlines do not sit on the cell
+edges. The grid itself does not change. At the 1920×1200 reference:
+
+| | cell | drawn at 96 % | free on each side |
+|---|---|---|---|
+| Card (also hand and deck) | 240 × 342.9 | 230.4 × 329.1 | 4.8 left/right, 6.9 top/bottom |
+| Totem | row 257.1 tall | 246.9 tall (Life 202.5, Mana 289.3, Time 298.9 wide) | 5.1 top/bottom |
+
+The outline is drawn centred on the fill's edge, so it reaches about 4 px past
+a card's fill left and right and 2 px past a totem's; two cards side by side
+keep roughly 1.5 px between their outlines.
+
 ## The footprints
 
 Only the *aspect ratios* of the two props set the grid; the centimetre

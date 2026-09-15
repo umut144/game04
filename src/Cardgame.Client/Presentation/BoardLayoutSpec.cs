@@ -62,6 +62,12 @@ public static class BoardLayoutSpec
     };
 
     /// <summary>
+    /// How much of its cell a card or totem fills, around the cell's centre:
+    /// 4 % smaller than the cell so outlines do not sit on its edge.
+    /// </summary>
+    public const float AssetFill = 0.96f;
+
+    /// <summary>
     /// Which pair of column-boundary indices each of the 3 totem cells spans,
     /// left to right — places A, B, C.
     /// </summary>
