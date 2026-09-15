@@ -20,7 +20,7 @@ namespace Cardgame.Client.Presentation;
 /// applies commands to it directly, always showing PlayerA's view (own side
 /// at the bottom). Clicking the opponent's row places for PlayerB, so both
 /// sides can be tried from one screen. R rolls a new seed, M switches the
-/// mirror mode, 1 and 2 switch between the two board layouts (LAYOUT-02)
+/// mirror mode, 1 to 3 switch between the board layouts (LAYOUT-02)
 /// while keeping the match as it is.
 ///
 /// Both rows count 1-6 from the left and the totem places run A, B, C from
@@ -36,6 +36,7 @@ public partial class BoardScreen : Control
     private static readonly Color OpponentSlotFill = new(0.22f, 0.14f, 0.17f);
     private static readonly Color CardFill = new(0.90f, 0.86f, 0.76f);
     private static readonly Color CardBorder = new(0.35f, 0.30f, 0.22f);
+    private static readonly Color MarginCardFill = new(0.62f, 0.58f, 0.50f);
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
 
 
@@ -53,7 +54,7 @@ public partial class BoardScreen : Control
     private ulong _seed = 1;
     private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
     private Label _info = null!;
-    private BoardLayoutSpec _layout = BoardLayoutSpec.WideCards;
+    private BoardLayoutSpec _layout = BoardLayoutSpec.MarginCards;
     private Control? _root;
 
     public override void _Ready()
@@ -83,6 +84,28 @@ public partial class BoardScreen : Control
         BuildSlotRow(Viewer, 2, OwnSlotFill);
         BuildTotemRow(Viewer, 3);
         BuildInfo();
+        BuildMarginCards();
+    }
+
+    // Where the hand (left) and the deck (right) would go: one card of this
+    // layout's size in each side margin, level with the own card row.
+    private void BuildMarginCards()
+    {
+        var rows = _layout.RowFractions;
+        var columns = _layout.ColumnFractions;
+        float cardWidth = columns[1] - columns[0];
+        float leftMargin = columns[0];
+        float rightMargin = 1f - columns[^1];
+
+        float handLeft = (leftMargin - cardWidth) / 2f;
+        var hand = MakePanel(MarginCardFill, CardBorder, handLeft, rows[2], handLeft + cardWidth, rows[3]);
+        hand.AddChild(MakeLabel("Hand", 22, CardBorder));
+        _root!.AddChild(hand);
+
+        float deckLeft = columns[^1] + (rightMargin - cardWidth) / 2f;
+        var deck = MakePanel(MarginCardFill, CardBorder, deckLeft, rows[2], deckLeft + cardWidth, rows[3]);
+        deck.AddChild(MakeLabel("Deck", 22, CardBorder));
+        _root!.AddChild(deck);
     }
 
     private void SwitchLayout(BoardLayoutSpec layout)
@@ -116,6 +139,10 @@ public partial class BoardScreen : Control
         else if (key.Keycode is Key.Key2 or Key.Kp2)
         {
             SwitchLayout(BoardLayoutSpec.WideCards);
+        }
+        else if (key.Keycode is Key.Key3 or Key.Kp3)
+        {
+            SwitchLayout(BoardLayoutSpec.MarginCards);
         }
         else if (key.Keycode == Key.M)
         {
@@ -167,7 +194,7 @@ public partial class BoardScreen : Control
         string mode = _mirrorMode == MirrorMode.ShuffledMirror ? "Shuffled Mirror" : "Perfect Mirror";
         _info.Text =
             $"G01 board preview\n\nlayout {_layout.Name}\nseed {_seed}\n{mode}\n\n" +
-            "1 / 2: switch layout\nR: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
+            "1 / 2 / 3: switch layout\nR: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
             "top row: opponent\nbottom row: you";
     }
 

@@ -78,7 +78,7 @@ them at whatever the actual window size is.
 ## Candidate: 70×100 cards (layout 2)
 
 Under comparison with the layout above (`TASKS.md`, `LAYOUT-02`);
-`BoardScreen` switches between them with keys 1 and 2.
+`BoardScreen` switches between the layouts with keys 1 to 3.
 
 The cards grow to 70×100 cm — larger, and wider in proportion (7:10 instead
 of 2:3) — at the same scale as before (60 cm = 200 px, so 3⅓ px per cm). The
@@ -108,6 +108,40 @@ The growth comes out of the margins. Scaling to the full height then takes
 
 So the cards gain about 10 % in width and 5 % in height against layout 1,
 while the totems end up about 6 % smaller and with more room around them.
+
+## Candidate: margin-sized cards (layout 3)
+
+Like layout 2 — 7:10 cards, totems unchanged at 300×240 before scaling, full
+height — plus one more condition: after scaling, each side margin is exactly
+one card wide, so the hand fits on the left and the deck on the right.
+
+With a card width *c* before scaling, the field is 6*c* wide and
+2·240 + 2·(10/7)*c* tall, and the factor is *f* = 1200 / that height. A side
+margin one card wide means 1920 = 6*cf* + 2*cf*, so the final card width
+*cf* is 1920/8 = **240**. Solving 240·(480 + 20*c*/7) = 1200*c* gives
+**c = 224**, a field height of 1120 and **f = 15/14 ≈ 1.071**.
+
+| | before scaling | after scaling (15/14) |
+|---|---|---|
+| Unit column = card width | 224 | 240 |
+| Card row = card | 320 (224×320) | 342.9 (240×342.9) |
+| Totem row | 240 | 257.1 |
+| Totem cell | 448 | 480 |
+| Totem | 300×240, 74 free each side | 321.4×257.1, 79.3 free each side |
+| Field | 1344×1120 | 1440×1200 |
+| Side margin | 288 | **240 = one card** |
+| Top/bottom margin | 40 | 0 |
+
+At the old scale of 3⅓ px per cm the card is 67.2×96 cm, still 7:10. The
+fractions are the cleanest of the three: columns, cards and side margins are
+each 1/8 of the width; totem rows 3/14 and card rows 2/7 of the height.
+
+Against layout 2 the cards are slightly narrower (240 instead of 244.2) and
+shorter (342.9 instead of 348.8); the totems are slightly larger (321.4×257.1
+instead of 314.0×251.2).
+
+`BoardScreen` marks the hand and the deck with one card-sized placeholder in
+each margin, level with the own card row, in every layout.
 
 ## Notes
 

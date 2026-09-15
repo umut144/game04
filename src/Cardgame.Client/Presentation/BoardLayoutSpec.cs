@@ -7,13 +7,18 @@ namespace Cardgame.Client.Presentation;
 /// pixels, so it carries over unchanged at any resolution sharing the same
 /// 16:10 aspect. Derivation and numbers: <c>docs/BOARD_DESIGN.md</c>.
 ///
-/// Two layouts are on the table (<c>LAYOUT-02</c>) and <see cref="BoardScreen"/>
-/// switches between them with keys 1 and 2:
+/// Three layouts are on the table (<c>LAYOUT-02</c>) and <see cref="BoardScreen"/>
+/// switches between them with keys 1 to 3:
 /// - <see cref="Classic"/>: 60×90 cards. A 1200×1080 grid (columns 200,
 ///   totem rows 240, card rows 300) scaled by 10/9 to the full height.
 /// - <see cref="WideCards"/>: 70×100 cards at the same px-per-cm, totems
 ///   unchanged. A 1400×1146.7 grid (columns 233.3, totem rows 240, card rows
 ///   333.3) scaled by 45/43 to the full height.
+/// - <see cref="MarginCards"/>: 7:10 cards narrowed until, after scaling to
+///   the full height, a card is exactly as wide as each side margin (room for
+///   the hand on the left and the deck on the right). A 1344×1120 grid
+///   (columns 224, totem rows 240, card rows 320) scaled by 15/14: columns,
+///   cards and margins are all 1/8 of the width.
 /// In both, a card fills its slot exactly and a totem is 300×240 before
 /// scaling, centred in its two-column cell. Non-integer pixel sizes are
 /// expected; the anchors take care of them.
@@ -51,6 +56,12 @@ public sealed class BoardLayoutSpec
         new[] { 0f, 9f / 43f, 1f / 2f, 34f / 43f, 1f },
         new[] { 163f / 1376f, 338f / 1376f, 513f / 1376f, 688f / 1376f, 863f / 1376f, 1038f / 1376f, 1213f / 1376f },
         5f / 28f);
+
+    public static readonly BoardLayoutSpec MarginCards = new(
+        "3: cards 7:10, margin = card, factor 15/14",
+        new[] { 0f, 3f / 14f, 1f / 2f, 11f / 14f, 1f },
+        new[] { 1f / 8f, 2f / 8f, 3f / 8f, 4f / 8f, 5f / 8f, 6f / 8f, 7f / 8f },
+        37f / 224f);
 
     private BoardLayoutSpec(
         string name,
