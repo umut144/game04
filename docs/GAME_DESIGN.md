@@ -130,7 +130,9 @@ and they are simultaneously the player's **HUD**: a totem does not display a
 resource next to itself, it *is* the display. Damaging a totem visibly
 shortens the thing the player reads their own state from.
 
-Each totem is built as a body plus **7 segments**. **EXPERIMENTAL** — the
+The Totems of Life and Mana are each built as a body plus **7 segments**; the
+Totem of Time has **8** — deliberately, for now, set against the other two.
+**EXPERIMENTAL** — the
 presentation of all three totems needs testing, especially in combination with
 Mastery Stats.
 
@@ -856,6 +858,5 @@ and the cast — `Rogue`, `Wizard`, `Warrior`, `Sorcerer`, `ArcherF`, `Glavier`,
 The client's copies are synced from there into
 `src/Cardgame.Client/assets/polytools/` (`TASKS.md`, `SYNC-02`).
 
-The exported totems carry 8 (Life), 8 (Mana) and 9 (Time) components against a
-design of body + 7 segments, so Time has one segment too many. Reconcile before the totem presentation gate: the
-segment count is a gameplay value, not only a model detail.
+The exported totems carry 8 (Life), 8 (Mana) and 9 (Time) components — body
+plus 7, 7 and 8 segments, as §5 intends.

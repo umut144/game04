@@ -83,10 +83,9 @@ Anywhere else at the same 16:10 aspect, multiply by (viewport width / 1920)
 
 ## Open, tracked in `docs/TASKS.md`
 
-- `ASSET-01`: the exported Totem of Time currently carries body + 8 segments
-  against a design of body + 7, which will move its authored bounding box.
-  The 5:4 target ratio here is what the totem is *meant* to render at once
-  corrected, not a measurement of today's export.
+- The 5:4 totem ratio is a target for all three totems, not a measurement of
+  the exports; the Totem of Time carries one segment more than the other two
+  (`GAME_DESIGN.md` §5).
 - The art is synced (`SYNC-02`, `src/Cardgame.Client/assets/polytools/`), but
   nothing draws a manifest yet — `BoardGridPreview.tscn` still shows
   placeholder colored cells at these exact proportions.
