@@ -75,6 +75,40 @@ The pixel sizes are not whole numbers at this resolution. That is expected:
 the layout is defined by the fractions, and the anchors place everything from
 them at whatever the actual window size is.
 
+## Candidate: 70×100 cards (layout 2)
+
+Under comparison with the layout above (`TASKS.md`, `LAYOUT-02`);
+`BoardScreen` switches between them with keys 1 and 2.
+
+The cards grow to 70×100 cm — larger, and wider in proportion (7:10 instead
+of 2:3) — at the same scale as before (60 cm = 200 px, so 3⅓ px per cm). The
+totems deliberately stay as they are. Before scaling, at 1920×1200:
+
+| | Layout 1 (60×90) | Layout 2 (70×100) |
+|---|---|---|
+| Unit column | 200 | 233.3 |
+| Card row = card | 300 (200×300) | 333.3 (233.3×333.3) |
+| Totem cell | 400 | 466.7 |
+| Totem | 300×240, 50 free each side | 300×240, 83.3 free each side |
+| Field | 1200×1080 | 1400×1146.7 |
+| Side / top-bottom margin | 360 / 60 | 260 / 26.7 |
+
+The growth comes out of the margins. Scaling to the full height then takes
+**1200 / 1146.7 = 45/43 ≈ 1.047** instead of 10/9:
+
+| | Layout 1 | Layout 2 |
+|---|---|---|
+| Card | 222.2×333.3 | 244.2×348.8 |
+| Totem row | 266.7 | 251.2 |
+| Totem cell | 444.4 | 488.4 |
+| Totem | 333.3×266.7 (75 % of its cell) | 314.0×251.2 (64 % of its cell) |
+| Field | 1333.3×1200 | 1465.1×1200 |
+| Side margin | 293.3 | 227.4 |
+| Fractions | totem row 2/9, card row 5/18, column 25/216 | totem row 9/43, card row 25/86, column 175/1376 |
+
+So the cards gain about 10 % in width and 5 % in height against layout 1,
+while the totems end up about 6 % smaller and with more room around them.
+
 ## Notes
 
 - The 5:4 totem ratio is a target for all three totems, not a measurement of

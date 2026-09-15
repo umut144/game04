@@ -28,6 +28,7 @@ the solution shells now exist with G00's tests in place. In G01 the board geomet
 | ID | Area | Outcome | Status |
 |---|---|---|---|
 | `TEST-01` | Combat | Pin the Human bomb bonus with a test. That +1 Radius does **not** extend a thrown card's reach against totems is a deliberate balance decision (`GAME_DESIGN.md` §8.4), but it is *emergent*: it falls out of `floor(2R/3)` being equal for 3 and 4. Change the surcharge formula and the decision changes silently. A comment will not hold it; an assertion will. | **Blocked on G06** |
+| `LAYOUT-02` | G01 / Board | Choose between the two board layouts in `docs/BOARD_DESIGN.md`: layout 1 (60×90 cards, the settled `LAYOUT-01`) and layout 2 (70×100 cards at the same scale, totems unchanged, factor 45/43). `BoardScreen` shows both — keys 1 and 2 — and starts on layout 2. Once one is chosen, the other comes out of `BoardLayoutSpec` and `LAYOUT-01` is updated. | **Open — developer compares on the client** |
 | `DOC-01` | Documentation | Decide how the data-allowance notice reaches an agent that starts at `AGENTS.md`. In all four repositories the link runs one way — every `CLAUDE.md` says to read `AGENTS.md` in full, and no `AGENTS.md` requires `CLAUDE.md` in return — so an agent following the AGENTS convention never sees it. Either repeat the notice in each `AGENTS.md`, or add one line making `CLAUDE.md` required reading and keep the text in one place. Spans all four repositories, not just this one. | **Open** |
 
 ## Optional Later
