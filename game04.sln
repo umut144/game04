@@ -1,0 +1,51 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Core", "src\Cardgame.Core\Cardgame.Core.csproj", "{C9F2AB24-4B1C-4F64-86F2-703A3CF860DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Server", "src\Cardgame.Server\Cardgame.Server.csproj", "{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.App", "src\Cardgame.App\Cardgame.App.csproj", "{BBC6CA73-3A96-47F3-B612-D4272A2F8359}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Cli", "src\Cardgame.Cli\Cardgame.Cli.csproj", "{51DC4509-B465-4706-8AB5-D4E04935C73D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Core.Tests", "tests\Cardgame.Core.Tests\Cardgame.Core.Tests.csproj", "{53F690F3-0621-4F99-ABD0-C623CFD46566}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.TestSupport", "tests\Cardgame.TestSupport\Cardgame.TestSupport.csproj", "{BA625D1E-3DD8-4941-B473-3619B8C0DA94}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9F2AB24-4B1C-4F64-86F2-703A3CF860DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9F2AB24-4B1C-4F64-86F2-703A3CF860DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9F2AB24-4B1C-4F64-86F2-703A3CF860DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9F2AB24-4B1C-4F64-86F2-703A3CF860DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBC6CA73-3A96-47F3-B612-D4272A2F8359}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC6CA73-3A96-47F3-B612-D4272A2F8359}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBC6CA73-3A96-47F3-B612-D4272A2F8359}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC6CA73-3A96-47F3-B612-D4272A2F8359}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51DC4509-B465-4706-8AB5-D4E04935C73D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51DC4509-B465-4706-8AB5-D4E04935C73D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51DC4509-B465-4706-8AB5-D4E04935C73D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51DC4509-B465-4706-8AB5-D4E04935C73D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53F690F3-0621-4F99-ABD0-C623CFD46566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53F690F3-0621-4F99-ABD0-C623CFD46566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53F690F3-0621-4F99-ABD0-C623CFD46566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53F690F3-0621-4F99-ABD0-C623CFD46566}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

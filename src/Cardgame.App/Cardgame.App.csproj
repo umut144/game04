@@ -1,0 +1,13 @@
+<Project Sdk="Godot.NET.Sdk/4.7.1">
+
+  <PropertyGroup>
+    <!-- Repeated deliberately: the Godot editor writes this file itself and
+         expects to find TargetFramework here (see Directory.Build.props). -->
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cardgame.Core\Cardgame.Core.csproj" />
+  </ItemGroup>
+
+</Project>

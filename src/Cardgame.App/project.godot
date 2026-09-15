@@ -1,0 +1,17 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly, since the parameters
+; that go here are meant to be edited by the editor.
+;
+; G00 placeholder (CORE-05): this project intentionally shows nothing yet.
+; The first real scene arrives with G01.
+
+config_version=5
+
+[application]
+
+config/name="game04"
+config/features=PackedStringArray("4.7", "C#")
+
+[dotnet]
+
+project/assembly_name="Cardgame.App"
