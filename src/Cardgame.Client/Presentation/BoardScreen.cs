@@ -20,8 +20,7 @@ namespace Cardgame.Client.Presentation;
 /// applies commands to it directly, always showing PlayerA's view (own side
 /// at the bottom). Clicking the opponent's row places for PlayerB, so both
 /// sides can be tried from one screen. R rolls a new seed, M switches the
-/// mirror mode, 1 to 3 switch between the board layouts (LAYOUT-02)
-/// while keeping the match as it is.
+/// mirror mode.
 ///
 /// Both rows count 1-6 from the left and the totem places run A, B, C from
 /// the left on both sides: the view is mirrored, not turned, so slot n faces
@@ -39,7 +38,6 @@ public partial class BoardScreen : Control
     private static readonly Color MarginCardFill = new(0.62f, 0.58f, 0.50f);
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
 
-
     private readonly CardCatalog _catalog = DesignCatalogLoader.LoadFromSources(
         new Dictionary<string, string>(), new Dictionary<string, string>());
 
@@ -54,8 +52,7 @@ public partial class BoardScreen : Control
     private ulong _seed = 1;
     private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
     private Label _info = null!;
-    private BoardLayoutSpec _layout = BoardLayoutSpec.MarginCards;
-    private Control? _root;
+    private Control _root = null!;
 
     public override void _Ready()
     {
@@ -66,17 +63,6 @@ public partial class BoardScreen : Control
 
     private void BuildBoard()
     {
-        if (_root is not null)
-        {
-            RemoveChild(_root);
-            _root.QueueFree();
-        }
-
-        _cards.Clear();
-        _cardLabels.Clear();
-        _totems.Clear();
-        _totemLabels.Clear();
-
         _root = MakeRect(Background, 0f, 0f, 1f, 1f);
         AddChild(_root);
         BuildTotemRow(PlayerIds.Opponent(Viewer), 0);
@@ -87,37 +73,19 @@ public partial class BoardScreen : Control
         BuildMarginCards();
     }
 
-    // Where the hand (left) and the deck (right) would go: one card of this
-    // layout's size in each side margin, level with the own card row.
+    // Where the hand (left) and the deck (right) will go: each side margin is
+    // exactly one card wide (BOARD_DESIGN.md), level with the own card row.
     private void BuildMarginCards()
     {
-        var rows = _layout.RowFractions;
-        var columns = _layout.ColumnFractions;
-        float cardWidth = columns[1] - columns[0];
-        float leftMargin = columns[0];
-        float rightMargin = 1f - columns[^1];
-
-        float handLeft = (leftMargin - cardWidth) / 2f;
-        var hand = MakePanel(MarginCardFill, CardBorder, handLeft, rows[2], handLeft + cardWidth, rows[3]);
+        var rows = BoardLayoutSpec.RowFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
+        var hand = MakePanel(MarginCardFill, CardBorder, 0f, rows[2], columns[0], rows[3]);
         hand.AddChild(MakeLabel("Hand", 22, CardBorder));
-        _root!.AddChild(hand);
+        _root.AddChild(hand);
 
-        float deckLeft = columns[^1] + (rightMargin - cardWidth) / 2f;
-        var deck = MakePanel(MarginCardFill, CardBorder, deckLeft, rows[2], deckLeft + cardWidth, rows[3]);
+        var deck = MakePanel(MarginCardFill, CardBorder, columns[^1], rows[2], 1f, rows[3]);
         deck.AddChild(MakeLabel("Deck", 22, CardBorder));
-        _root!.AddChild(deck);
-    }
-
-    private void SwitchLayout(BoardLayoutSpec layout)
-    {
-        if (layout == _layout)
-        {
-            return;
-        }
-
-        _layout = layout;
-        BuildBoard();
-        Refresh();
+        _root.AddChild(deck);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -131,18 +99,6 @@ public partial class BoardScreen : Control
         {
             _seed++;
             NewMatch();
-        }
-        else if (key.Keycode is Key.Key1 or Key.Kp1)
-        {
-            SwitchLayout(BoardLayoutSpec.Classic);
-        }
-        else if (key.Keycode is Key.Key2 or Key.Kp2)
-        {
-            SwitchLayout(BoardLayoutSpec.WideCards);
-        }
-        else if (key.Keycode is Key.Key3 or Key.Kp3)
-        {
-            SwitchLayout(BoardLayoutSpec.MarginCards);
         }
         else if (key.Keycode == Key.M)
         {
@@ -193,8 +149,8 @@ public partial class BoardScreen : Control
 
         string mode = _mirrorMode == MirrorMode.ShuffledMirror ? "Shuffled Mirror" : "Perfect Mirror";
         _info.Text =
-            $"G01 board preview\n\nlayout {_layout.Name}\nseed {_seed}\n{mode}\n\n" +
-            "1 / 2 / 3: switch layout\nR: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
+            $"G01 board preview\n\nseed {_seed}\n{mode}\n\n" +
+            "R: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
             "top row: opponent\nbottom row: you";
     }
 
@@ -217,8 +173,8 @@ public partial class BoardScreen : Control
 
     private void BuildSlotRow(PlayerId player, int band, Color slotFill)
     {
-        var rows = _layout.RowFractions;
-        var columns = _layout.ColumnFractions;
+        var rows = BoardLayoutSpec.RowFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
         for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
         {
             var cell = MakePanel(slotFill, CellBorder, columns[slot - 1], rows[band], columns[slot], rows[band + 1]);
@@ -227,7 +183,7 @@ public partial class BoardScreen : Control
             int capturedSlot = slot;
             cell.GuiInput += @event => OnSlotInput(@event, player, capturedSlot);
             cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
-            _root!.AddChild(cell);
+            _root.AddChild(cell);
 
             // The card fills its slot exactly (BOARD_DESIGN.md).
             var card = MakePanel(CardFill, CardBorder, 0f, 0f, 1f, 1f);
@@ -242,15 +198,15 @@ public partial class BoardScreen : Control
 
     private void BuildTotemRow(PlayerId player, int band)
     {
-        var rows = _layout.RowFractions;
-        var columns = _layout.ColumnFractions;
+        var rows = BoardLayoutSpec.RowFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
         foreach (var (left, right) in BoardLayoutSpec.TotemCellSpans)
         {
             var position = (TotemPosition)(left / 2);
             var cell = MakePanel(CellFill, CellBorder, columns[left], rows[band], columns[right], rows[band + 1]);
-            _root!.AddChild(cell);
+            _root.AddChild(cell);
 
-            var totem = MakePanel(CellFill, CellBorder, _layout.TotemSideInset, 0f, 1f - _layout.TotemSideInset, 1f);
+            var totem = MakePanel(CellFill, CellBorder, BoardLayoutSpec.TotemSideInset, 0f, 1f - BoardLayoutSpec.TotemSideInset, 1f);
             var label = MakeLabel(string.Empty, 22, Colors.White);
             totem.AddChild(label);
             cell.AddChild(totem);
@@ -261,7 +217,7 @@ public partial class BoardScreen : Control
 
     private void BuildInfo()
     {
-        var columns = _layout.ColumnFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
         var margin = MakeRect(Background, 0f, 0f, columns[0], 1f);
         _info = MakeLabel(string.Empty, 20, DimText);
         _info.HorizontalAlignment = HorizontalAlignment.Left;
@@ -271,7 +227,7 @@ public partial class BoardScreen : Control
         _info.OffsetTop = 24;
         _info.OffsetRight = -16;
         margin.AddChild(_info);
-        _root!.AddChild(margin);
+        _root.AddChild(margin);
     }
 
     private static Color TotemColour(TotemType type) => type switch

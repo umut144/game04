@@ -3,79 +3,28 @@ using System.Collections.Generic;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// One board grid, expressed as fractions of the viewport rather than raw
+/// The board grid, expressed as fractions of the viewport rather than raw
 /// pixels, so it carries over unchanged at any resolution sharing the same
-/// 16:10 aspect. Derivation and numbers: <c>docs/BOARD_DESIGN.md</c>.
+/// 16:10 aspect. Derivation and how it was chosen: <c>docs/BOARD_DESIGN.md</c>
+/// (<c>LAYOUT-01</c>).
 ///
-/// Three layouts are on the table (<c>LAYOUT-02</c>) and <see cref="BoardScreen"/>
-/// switches between them with keys 1 to 3:
-/// - <see cref="Classic"/>: 60×90 cards. A 1200×1080 grid (columns 200,
-///   totem rows 240, card rows 300) scaled by 10/9 to the full height.
-/// - <see cref="WideCards"/>: 70×100 cards at the same px-per-cm, totems
-///   unchanged. A 1400×1146.7 grid (columns 233.3, totem rows 240, card rows
-///   333.3) scaled by 45/43 to the full height.
-/// - <see cref="MarginCards"/>: 7:10 cards narrowed until, after scaling to
-///   the full height, a card is exactly as wide as each side margin (room for
-///   the hand on the left and the deck on the right). A 1344×1120 grid
-///   (columns 224, totem rows 240, card rows 320) scaled by 15/14: columns,
-///   cards and margins are all 1/8 of the width.
-/// In both, a card fills its slot exactly and a totem is 300×240 before
-/// scaling, centred in its two-column cell. Non-integer pixel sizes are
-/// expected; the anchors take care of them.
+/// At the 1920×1200 reference: 7:10 cards 240×342.9, totem rows 257.1 tall,
+/// the field 1440×1200 filling the full height, and each side margin exactly
+/// one card wide — room for the hand on the left and the deck on the right.
+/// Columns, cards and side margins are each 1/8 of the width. A card fills
+/// its slot exactly; a totem (5:4) is centred in its two-column cell.
+/// Non-integer pixel sizes are expected; the anchors take care of them.
 ///
 /// Presentation-only: nothing in Cardgame.Core reads this.
 /// </summary>
-public sealed class BoardLayoutSpec
+public static class BoardLayoutSpec
 {
-    /// <summary>The resolution the layouts were worked out against.</summary>
+    /// <summary>The resolution the layout was worked out against.</summary>
     public const int DesignViewportWidth = 1920;
     public const int DesignViewportHeight = 1200;
 
     public const int UnitColumnCount = 6;
     public const int TotemCellCount = 3;
-
-    /// <summary>
-    /// Which pair of column-boundary indices each of the 3 totem cells spans,
-    /// left to right — places A, B, C. The same in every layout.
-    /// </summary>
-    public static readonly IReadOnlyList<(int Left, int Right)> TotemCellSpans = new[]
-    {
-        (0, 2),
-        (2, 4),
-        (4, 6),
-    };
-
-    public static readonly BoardLayoutSpec Classic = new(
-        "1: cards 60×90, factor 10/9",
-        new[] { 0f, 2f / 9f, 1f / 2f, 7f / 9f, 1f },
-        new[] { 33f / 216f, 58f / 216f, 83f / 216f, 108f / 216f, 133f / 216f, 158f / 216f, 183f / 216f },
-        1f / 8f);
-
-    public static readonly BoardLayoutSpec WideCards = new(
-        "2: cards 70×100, factor 45/43",
-        new[] { 0f, 9f / 43f, 1f / 2f, 34f / 43f, 1f },
-        new[] { 163f / 1376f, 338f / 1376f, 513f / 1376f, 688f / 1376f, 863f / 1376f, 1038f / 1376f, 1213f / 1376f },
-        5f / 28f);
-
-    public static readonly BoardLayoutSpec MarginCards = new(
-        "3: cards 7:10, margin = card, factor 15/14",
-        new[] { 0f, 3f / 14f, 1f / 2f, 11f / 14f, 1f },
-        new[] { 1f / 8f, 2f / 8f, 3f / 8f, 4f / 8f, 5f / 8f, 6f / 8f, 7f / 8f },
-        37f / 224f);
-
-    private BoardLayoutSpec(
-        string name,
-        IReadOnlyList<float> rowFractions,
-        IReadOnlyList<float> columnFractions,
-        float totemSideInset)
-    {
-        Name = name;
-        RowFractions = rowFractions;
-        ColumnFractions = columnFractions;
-        TotemSideInset = totemSideInset;
-    }
-
-    public string Name { get; }
 
     /// <summary>
     /// Vertical fractions (0..1) of the 5 row boundaries, top to bottom:
@@ -84,15 +33,47 @@ public sealed class BoardLayoutSpec
     /// [2] opponent unit row end / own unit row start (exact mid-line)
     /// [3] own unit row end / own totem row start
     /// [4] own totem row end / bottom edge
+    /// Totem rows are 3/14 of the height, card rows 2/7; no margin.
     /// </summary>
-    public IReadOnlyList<float> RowFractions { get; }
+    public static readonly IReadOnlyList<float> RowFractions = new[]
+    {
+        0f,
+        3f / 14f,
+        1f / 2f,
+        11f / 14f,
+        1f,
+    };
 
     /// <summary>
     /// Horizontal fractions (0..1) of the 7 column boundaries, left to right,
-    /// shared by every row: columns 0..5 are the 6 unit slots.
+    /// shared by every row: columns 0..5 are the 6 unit slots. Every column
+    /// and each side margin is 1/8 of the width.
     /// </summary>
-    public IReadOnlyList<float> ColumnFractions { get; }
+    public static readonly IReadOnlyList<float> ColumnFractions = new[]
+    {
+        1f / 8f,
+        2f / 8f,
+        3f / 8f,
+        4f / 8f,
+        5f / 8f,
+        6f / 8f,
+        7f / 8f,
+    };
 
-    /// <summary>The share of a totem cell's width left free on each side of the totem.</summary>
-    public float TotemSideInset { get; }
+    /// <summary>
+    /// Which pair of column-boundary indices each of the 3 totem cells spans,
+    /// left to right — places A, B, C.
+    /// </summary>
+    public static readonly IReadOnlyList<(int Left, int Right)> TotemCellSpans = new[]
+    {
+        (0, 2),
+        (2, 4),
+        (4, 6),
+    };
+
+    /// <summary>
+    /// The share of a totem cell's width left free on each side of the
+    /// totem: 74 of 448 before scaling (the totem is 300 of the cell's 448).
+    /// </summary>
+    public const float TotemSideInset = 37f / 224f;
 }
