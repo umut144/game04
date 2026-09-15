@@ -64,15 +64,23 @@ Opponent back:   [ Totem A ][ Totem B ][ Totem C ]     3 totems, 2 columns each
 Opponent front:   1   2   3   4   5   6               6 unit slots
                  ───────────────────────────
 Own front:        1   2   3   4   5   6               6 unit slots
-Own back:        [ Totem ][ Totem ][ Totem ]           3 totems, 2 columns each
+Own back:        [ Totem A ][ Totem B ][ Totem C ]     3 totems, 2 columns each
 ```
 
-- 6 unit slots per side, numbered 1–6, side-local.
-- 3 totems per side, each occupying 2 back-row columns: columns 1–2, 3–4, 5–6.
+- 6 unit slots per side, numbered 1–6 from the left, side-local.
+- 3 totem places per side, **A, B, C**, each occupying 2 back-row columns:
+  A behind columns 1–2, B behind 3–4, C behind 5–6.
 - The three totems are **Totem of Life**, **Totem of Mana** and **Totem of
-  Time**. Their assignment to the three column pairs is randomised at match
-  start (see §2 for how the two sides relate).
-- Adjacency is horizontal within one side. Slot 4 opposes slot 4.
+  Time**. Which totem stands on which place is randomised at match start
+  (see §2 for how the two sides relate).
+- **Both sides count in the same direction.** Slot *n* opposes slot *n*, and
+  place A opposes place A; what differs between the sides is only which totem
+  stands on a place. Each player sees their own side at the bottom and the
+  opponent's at the top, both numbered 1–6 from the left: the view is
+  mirrored, not turned, so no rule that says "opposite" or "behind" needs a
+  conversion.
+- Adjacency is horizontal within one side: slot *n* neighbours *n−1* and
+  *n+1*. The totem behind column *c* is the place whose two columns include *c*.
 
 Canonical layout reference: `concepts/board_field.JPG`. Pixel-level grid
 measurements (column/cell/margin sizes for the actual on-screen layout) are
