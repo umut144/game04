@@ -83,7 +83,7 @@ is filled paper white.
 ## Breathing room
 
 Cards and totems are drawn at **96 %** of the size above, centred in their
-cells (`BoardLayoutSpec.AssetFill`), so their outlines do not sit on the cell
+cells (`cell_fill` in `design/asset_presentation.json`), so their outlines do not sit on the cell
 edges. The grid itself does not change. At the 1920×1200 reference:
 
 | | cell | drawn at 96 % | free on each side |

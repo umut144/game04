@@ -192,7 +192,7 @@ public partial class BoardScreen : Control
             cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
             _root.AddChild(cell);
 
-            // The card is centred in its slot, 4 % smaller (BOARD_DESIGN.md).
+            // The card is centred in its slot, a little smaller (cell_fill, BOARD_DESIGN.md).
             var card = MakeCardView(BoardAssets.CardKey);
             card.Visible = false;
             cell.AddChild(card);
@@ -217,8 +217,8 @@ public partial class BoardScreen : Control
             letter.OffsetTop = 6;
             cell.AddChild(letter);
 
-            // The totem is centred in its cell at the board's scale, 4 % smaller.
-            var totem = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = BoardLayoutSpec.AssetFill };
+            // The totem is centred in its cell at the board's scale, a little smaller (cell_fill).
+            var totem = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = _assets?.CellFill ?? 1f };
             Place(totem, 0f, 0f, 1f, 1f);
             cell.AddChild(totem);
             _totems[(player, position)] = totem;
@@ -242,7 +242,7 @@ public partial class BoardScreen : Control
 
     private AssetView MakeCardView(string key)
     {
-        var view = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = BoardLayoutSpec.AssetFill };
+        var view = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = _assets?.CellFill ?? 1f };
         Place(view, 0f, 0f, 1f, 1f);
         _assets?.ShowIn(view, key);
         return view;

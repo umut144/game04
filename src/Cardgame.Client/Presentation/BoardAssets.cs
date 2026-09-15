@@ -33,8 +33,8 @@ public sealed class BoardAssets
         string presentationPath = Path.Combine(design, "asset_presentation.json");
         var presentation = AssetPresentationLoader.Parse(File.ReadAllText(presentationPath), presentationPath);
 
-        var assets = new BoardAssets();
-        foreach (var (key, entry) in presentation)
+        var assets = new BoardAssets { CellFill = (float)presentation.CellFill };
+        foreach (var (key, entry) in presentation.Assets)
         {
             assets._assets[key] = (library.Build(key, entry), Color.FromHtml(entry.Fill), Color.FromHtml(entry.Stroke));
         }
@@ -49,6 +49,9 @@ public sealed class BoardAssets
         TotemType.Time => "totem_of_time",
         _ => throw new System.ArgumentOutOfRangeException(nameof(type)),
     };
+
+    /// <summary>How much of its cell a card or totem fills (design/asset_presentation.json).</summary>
+    public float CellFill { get; private init; } = 1f;
 
     /// <summary>The card's width in game04 meters: one card fills one column.</summary>
     public float CardWidth => _assets[CardKey].Geometry.Width;

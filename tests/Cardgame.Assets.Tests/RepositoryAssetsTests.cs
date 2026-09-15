@@ -15,7 +15,7 @@ public sealed class RepositoryAssetsTests
     private static readonly IReadOnlyDictionary<string, AssetPresentation> Presentation =
         AssetPresentationLoader.Parse(
             File.ReadAllText(Path.Combine(Root, "design", "asset_presentation.json")),
-            "design/asset_presentation.json");
+            "design/asset_presentation.json").Assets;
 
     [Fact]
     public void EveryKeyGame04UsesHasAPresentationAndASyncedManifest()

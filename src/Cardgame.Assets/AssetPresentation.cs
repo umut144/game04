@@ -11,11 +11,18 @@ using System.Text.Json;
 /// </summary>
 public sealed record AssetPresentation(double ScaleX, double ScaleY, string Fill, string Stroke);
 
+/// <summary>
+/// The whole of design/asset_presentation.json: the per-asset entries and
+/// <see cref="CellFill"/>, how much of its board cell a card or totem fills
+/// (drawn centred, so the rest is shared evenly around it).
+/// </summary>
+public sealed record AssetPresentationFile(double CellFill, IReadOnlyDictionary<string, AssetPresentation> Assets);
+
 public static class AssetPresentationLoader
 {
     public const int SupportedSchemaVersion = 1;
 
-    public static IReadOnlyDictionary<string, AssetPresentation> Parse(string json, string source)
+    public static AssetPresentationFile Parse(string json, string source)
     {
         void Fail(string message) => throw new ManifestException($"{source}: {message}");
 
@@ -36,6 +43,14 @@ public static class AssetPresentationLoader
                 || !version.TryGetInt32(out int schema) || schema != SupportedSchemaVersion)
             {
                 Fail($"schema_version must be {SupportedSchemaVersion}");
+            }
+
+            if (!root.TryGetProperty("cell_fill", out var cellFillValue)
+                || !cellFillValue.TryGetDouble(out double cellFill)
+                || !(cellFill > 0) || cellFill > 1)
+            {
+                Fail("cell_fill must be a number above 0 and at most 1");
+                return null!;
             }
 
             if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Object)
@@ -67,7 +82,7 @@ public static class AssetPresentationLoader
                 result[entry.Name] = new AssetPresentation(x, y, fill, stroke);
             }
 
-            return result;
+            return new AssetPresentationFile(cellFill, result);
         }
     }
 

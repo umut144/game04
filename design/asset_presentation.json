@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "cell_fill": 0.96,
   "assets": {
     "card": {
       "scale": [1.12, 1.0666666666666667],
