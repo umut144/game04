@@ -46,9 +46,11 @@ settles it. Layered strictly downwards — nothing ever references upwards.
 | --- | --- | --- |
 | `src/Cardgame.Core` | nothing | world state, commands, events, systems, snapshot projection, card and board data |
 | `src/Cardgame.Server` | Core | lobby, match runner, command queue, the authoritative clock |
-| `src/Cardgame.Client` | Core | the Godot client: layout, drawing, animation, input plumbing |
+| `src/Cardgame.Assets` | nothing | reading PolyTools manifests and game04's asset presentation, and turning them into drawable geometry — Godot-free so it can be tested |
+| `src/Cardgame.Client` | Core, Assets | the Godot client: layout, drawing, animation, input plumbing |
 | `src/Cardgame.Cli` | Core | headless match runner — plays a command list from a seed and prints the resulting state |
 | `tests/Cardgame.Core.Tests` | Core, TestSupport | |
+| `tests/Cardgame.Assets.Tests` | Assets | |
 | `tests/Cardgame.TestSupport` | Core | fixtures shared by the test projects |
 
 Four rules follow from this:
@@ -58,8 +60,8 @@ Four rules follow from this:
   an engine anywhere in sight.
 - **There are no tests against `Cardgame.Client`.** A test project cannot reference
   it without pulling in `Godot.NET.Sdk`. The corollary is the useful half:
-  anything worth testing belongs in `Core`. If a rule is hard to test, it is in
-  the wrong project.
+  anything worth testing belongs in `Core` — or, for asset geometry, in
+  `Assets`. If a rule is hard to test, it is in the wrong project.
 - **The client never resolves a rule.** It sends commands and renders snapshots.
   `Client` references `Core` for those types only. If the types ever have to ship
   without the rules — a web client, say — they move into a project of their own;

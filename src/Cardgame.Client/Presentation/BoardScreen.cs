@@ -11,9 +11,9 @@ using Godot;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// G01's board: the grid of <see cref="BoardLayoutSpec"/>, the rolled totem
-/// layout as labelled placeholders, and blank cards placed and removed by
-/// clicking a slot. It draws a <see cref="PlayerView"/> and sends commands;
+/// G01's board: the grid of <see cref="BoardLayoutSpec"/>, the rolled totems
+/// and blank cards drawn with the synced PolyTools art (<see cref="BoardAssets"/>),
+/// cards placed and removed by clicking a slot. It draws a <see cref="PlayerView"/> and sends commands;
 /// it decides nothing itself.
 ///
 /// Dev bootstrap: there is no server yet, so this node holds the world and
@@ -33,18 +33,14 @@ public partial class BoardScreen : Control
     private static readonly Color CellBorder = new(0.30f, 0.36f, 0.33f);
     private static readonly Color OwnSlotFill = new(0.13f, 0.19f, 0.25f);
     private static readonly Color OpponentSlotFill = new(0.22f, 0.14f, 0.17f);
-    private static readonly Color CardFill = new(0.90f, 0.86f, 0.76f);
-    private static readonly Color CardBorder = new(0.35f, 0.30f, 0.22f);
-    private static readonly Color MarginCardFill = new(0.62f, 0.58f, 0.50f);
+    private static readonly Color MarginFill = new(0.08f, 0.11f, 0.10f);
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
 
     private readonly CardCatalog _catalog = DesignCatalogLoader.LoadFromSources(
         new Dictionary<string, string>(), new Dictionary<string, string>());
 
-    private readonly Dictionary<(PlayerId Player, int Slot), Panel> _cards = new();
-    private readonly Dictionary<(PlayerId Player, int Slot), Label> _cardLabels = new();
-    private readonly Dictionary<(PlayerId Player, TotemPosition Position), Panel> _totems = new();
-    private readonly Dictionary<(PlayerId Player, TotemPosition Position), Label> _totemLabels = new();
+    private readonly Dictionary<(PlayerId Player, int Slot), AssetView> _cards = new();
+    private readonly Dictionary<(PlayerId Player, TotemPosition Position), AssetView> _totems = new();
 
     private const PlayerId Viewer = PlayerId.PlayerA;
 
@@ -53,10 +49,22 @@ public partial class BoardScreen : Control
     private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
     private Label _info = null!;
     private Control _root = null!;
+    private BoardAssets? _assets;
+    private string _assetError = string.Empty;
 
     public override void _Ready()
     {
         AddChild(MakeRect(Background, 0f, 0f, 1f, 1f));
+        try
+        {
+            _assets = BoardAssets.Load();
+        }
+        catch (System.Exception exception)
+        {
+            _assetError = exception.Message;
+            GD.PushError($"board art not loaded: {exception.Message}");
+        }
+
         BuildBoard();
         NewMatch();
     }
@@ -79,12 +87,14 @@ public partial class BoardScreen : Control
     {
         var rows = BoardLayoutSpec.RowFractions;
         var columns = BoardLayoutSpec.ColumnFractions;
-        var hand = MakePanel(MarginCardFill, CardBorder, 0f, rows[2], columns[0], rows[3]);
-        hand.AddChild(MakeLabel("Hand", 22, CardBorder));
+        var hand = MakePanel(MarginFill, CellBorder, 0f, rows[2], columns[0], rows[3]);
+        hand.AddChild(MakeCardView(BoardAssets.CardKey));
+        hand.AddChild(MakeLabel("Hand", 22, CellBorder));
         _root.AddChild(hand);
 
-        var deck = MakePanel(MarginCardFill, CardBorder, columns[^1], rows[2], 1f, rows[3]);
-        deck.AddChild(MakeLabel("Deck", 22, CardBorder));
+        var deck = MakePanel(MarginFill, CellBorder, columns[^1], rows[2], 1f, rows[3]);
+        deck.AddChild(MakeCardView(BoardAssets.CardKey));
+        deck.AddChild(MakeLabel("Deck", 22, CellBorder));
         _root.AddChild(deck);
     }
 
@@ -151,23 +161,20 @@ public partial class BoardScreen : Control
         _info.Text =
             $"G01 board preview\n\nseed {_seed}\n{mode}\n\n" +
             "R: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
-            "top row: opponent\nbottom row: you";
+            "top row: opponent\nbottom row: you" +
+            (_assetError.Length > 0 ? $"\n\nART NOT LOADED:\n{_assetError}" : string.Empty);
     }
 
     private void Render(PlayerId player, BoardSideView board)
     {
         for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
         {
-            var occupant = board.UnitSlots[slot - 1];
-            _cards[(player, slot)].Visible = occupant.HasValue;
-            _cardLabels[(player, slot)].Text = occupant?.ToString() ?? string.Empty;
+            _cards[(player, slot)].Visible = board.UnitSlots[slot - 1].HasValue;
         }
 
         foreach (var placement in board.Totems)
         {
-            var panel = _totems[(player, placement.Position)];
-            panel.AddThemeStyleboxOverride("panel", MakeStyle(TotemColour(placement.Type), CellBorder, 2));
-            _totemLabels[(player, placement.Position)].Text = $"Totem of {placement.Type}\n{placement.Position}";
+            _assets?.ShowIn(_totems[(player, placement.Position)], BoardAssets.KeyOf(placement.Type));
         }
     }
 
@@ -186,13 +193,10 @@ public partial class BoardScreen : Control
             _root.AddChild(cell);
 
             // The card fills its slot exactly (BOARD_DESIGN.md).
-            var card = MakePanel(CardFill, CardBorder, 0f, 0f, 1f, 1f);
+            var card = MakeCardView(BoardAssets.CardKey);
             card.Visible = false;
-            var cardLabel = MakeLabel(string.Empty, 18, CardBorder);
-            card.AddChild(cardLabel);
             cell.AddChild(card);
             _cards[(player, slot)] = card;
-            _cardLabels[(player, slot)] = cardLabel;
         }
     }
 
@@ -206,12 +210,18 @@ public partial class BoardScreen : Control
             var cell = MakePanel(CellFill, CellBorder, columns[left], rows[band], columns[right], rows[band + 1]);
             _root.AddChild(cell);
 
-            var totem = MakePanel(CellFill, CellBorder, BoardLayoutSpec.TotemSideInset, 0f, 1f - BoardLayoutSpec.TotemSideInset, 1f);
-            var label = MakeLabel(string.Empty, 22, Colors.White);
-            totem.AddChild(label);
+            var letter = MakeLabel(position.ToString(), 20, DimText);
+            letter.HorizontalAlignment = HorizontalAlignment.Left;
+            letter.VerticalAlignment = VerticalAlignment.Top;
+            letter.OffsetLeft = 10;
+            letter.OffsetTop = 6;
+            cell.AddChild(letter);
+
+            // The totem stands bottom-centre in its cell at the board's scale.
+            var totem = new AssetView { PixelsPerMeter = BoardPixelsPerMeter };
+            Place(totem, 0f, 0f, 1f, 1f);
             cell.AddChild(totem);
             _totems[(player, position)] = totem;
-            _totemLabels[(player, position)] = label;
         }
     }
 
@@ -230,13 +240,26 @@ public partial class BoardScreen : Control
         _root.AddChild(margin);
     }
 
-    private static Color TotemColour(TotemType type) => type switch
+    private AssetView MakeCardView(string key)
     {
-        TotemType.Life => new Color(0.62f, 0.16f, 0.16f),
-        TotemType.Mana => new Color(0.17f, 0.33f, 0.70f),
-        TotemType.Time => new Color(0.72f, 0.54f, 0.12f),
-        _ => CellFill,
-    };
+        var view = new AssetView { PixelsPerMeter = BoardPixelsPerMeter };
+        Place(view, 0f, 0f, 1f, 1f);
+        _assets?.ShowIn(view, key);
+        return view;
+    }
+
+    // One card fills one column: the board's meters-to-pixels factor, shared
+    // by every asset so totems and cards keep game04's proportions.
+    private float BoardPixelsPerMeter()
+    {
+        if (_assets is null)
+        {
+            return 1f;
+        }
+
+        var columns = BoardLayoutSpec.ColumnFractions;
+        return GetViewportRect().Size.X * (columns[1] - columns[0]) / _assets.CardWidth;
+    }
 
     private static ColorRect MakeRect(Color colour, float left, float top, float right, float bottom)
     {

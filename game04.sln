@@ -14,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Core.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.TestSupport", "tests\Cardgame.TestSupport\Cardgame.TestSupport.csproj", "{BA625D1E-3DD8-4941-B473-3619B8C0DA94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Assets", "src\Cardgame.Assets\Cardgame.Assets.csproj", "{6E2D8B41-7C35-4F0A-9A61-2B5E3C4D7F10}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Assets.Tests", "tests\Cardgame.Assets.Tests\Cardgame.Assets.Tests.csproj", "{A3C94E27-15D8-4B6F-8E02-9F1B7D6C5A24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +48,14 @@ Global
 		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA625D1E-3DD8-4941-B473-3619B8C0DA94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E2D8B41-7C35-4F0A-9A61-2B5E3C4D7F10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E2D8B41-7C35-4F0A-9A61-2B5E3C4D7F10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E2D8B41-7C35-4F0A-9A61-2B5E3C4D7F10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E2D8B41-7C35-4F0A-9A61-2B5E3C4D7F10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3C94E27-15D8-4B6F-8E02-9F1B7D6C5A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3C94E27-15D8-4B6F-8E02-9F1B7D6C5A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3C94E27-15D8-4B6F-8E02-9F1B7D6C5A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3C94E27-15D8-4B6F-8E02-9F1B7D6C5A24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

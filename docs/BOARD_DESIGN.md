@@ -45,6 +45,41 @@ The pixel sizes are not all whole numbers at this resolution. That is
 expected: the layout is defined by the fractions, and the anchors place
 everything from them at whatever the actual window size is.
 
+## Asset scale: PolyTools's proportions, game04's size
+
+PolyTools's geometry is the source of truth, and each consumer scales it for
+its own purpose — SceneMaker scales the totems up by 5 to use them as MOBA
+buildings. game04 applies constant x/y factors per asset from
+`design/asset_presentation.json`, and the result is game04's own truth:
+
+| Asset | PolyTools (fill) | Factors x / y | In game04 |
+|---|---|---|---|
+| Card | 60 × 90 cm | 1.12 / 16⁄15 | 67.2 × 96 cm, 7:10 |
+| Totem footprint | 160 × 128 cm | 9⁄16 / 9⁄16 | 90 × 72 cm |
+| Totem of Life | 105 × 128 cm | 9⁄16 / 9⁄16 | 59.1 × 72 cm |
+| Totem of Mana | 150 × 128 cm | 9⁄16 / 9⁄16 | 84.4 × 72 cm |
+| Totem of Time | 155 × 128 cm | 9⁄16 / 9⁄16 | 87.2 × 72 cm |
+
+The card is stretched on purpose: the card slots are 7:10, the PolyTools card
+is 2:3. The totems keep their proportions.
+
+One factor then turns game04 meters into pixels for the whole board: a card
+fills one column, so pixels per meter = column width / 0.672 m — 357.1 at the
+1920×1200 reference. At that factor a card is 240 × 342.9 and every totem is
+257.1 tall, exactly its row, standing bottom-centre in its cell (Life 211,
+Mana 301, Time 311 wide; the footprint 321.4). Both anchors, the card's and the
+totems', are their bottom centre.
+
+A component's position is built by chaining the transforms of its parents,
+then its own position, rotation and scale; the asset pivot is subtracted last.
+The exported vertices already have the component pivot taken off, so it is not
+subtracted again (`Cardgame.Assets.AssetGeometry`, tested against the synced
+card: its corner glyphs land in its corners).
+
+Colours, from the same file: cards have crystal-blue strokes, totems strokes in
+their own colour — Life bordeaux, Mana sky blue, Time emerald — and everything
+is filled paper white.
+
 ## The footprints
 
 Only the *aspect ratios* of the two props set the grid; the centimetre
@@ -110,7 +145,7 @@ cards.
 - The 5:4 totem ratio is a target for all three totems, not a measurement of
   the exports; the Totem of Time carries one segment more than the other two
   (`GAME_DESIGN.md` §5).
-- The art is synced (`SYNC-02`, `src/Cardgame.Client/assets/polytools/`), but
-  nothing draws a manifest yet — `BoardScreen` (`src/Cardgame.Client/Presentation/`)
-  shows totems, cards, hand and deck as placeholders at these exact
-  proportions.
+- `BoardScreen` (`src/Cardgame.Client/Presentation/`) draws the synced art
+  (`SYNC-02`) for totems, cards, hand and deck. It reads the files from disk
+  through the project folder, which works in the editor but not yet in an
+  exported build.

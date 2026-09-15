@@ -25,6 +25,10 @@ Layout, once populated:
   `cards/*.json`) to refuse an update in which PolyTools has renamed or
   withdrawn something game04 uses; it never writes into `design/`. Not read by
   `DesignCatalogLoader`.
+- `asset_presentation.json` — how game04 shows each of those assets: constant
+  x/y factors applied to PolyTools's geometry (PolyTools is the source of
+  truth; the scaled result is game04's), and the fill and stroke colours, since
+  the manifests carry none. Read by `Cardgame.Assets` (`BOARD_DESIGN.md`).
 
 G00 ships this pipeline empty on purpose. `cards/` and `abilities/` do not
 exist yet: Rogue and Wizard are the first real content, and they are G02

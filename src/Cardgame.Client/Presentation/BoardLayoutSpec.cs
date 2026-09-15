@@ -12,7 +12,8 @@ namespace Cardgame.Client.Presentation;
 /// the field 1440×1200 filling the full height, and each side margin exactly
 /// one card wide — room for the hand on the left and the deck on the right.
 /// Columns, cards and side margins are each 1/8 of the width. A card fills
-/// its slot exactly; a totem (5:4) is centred in its two-column cell.
+/// its slot exactly; a totem stands bottom-centre in its two-column cell,
+/// sized by its game04 scale (design/asset_presentation.json).
 /// Non-integer pixel sizes are expected; the anchors take care of them.
 ///
 /// Presentation-only: nothing in Cardgame.Core reads this.
@@ -70,10 +71,4 @@ public static class BoardLayoutSpec
         (2, 4),
         (4, 6),
     };
-
-    /// <summary>
-    /// The share of a totem cell's width left free on each side of the
-    /// totem: 74 of 448 before scaling (the totem is 300 of the cell's 448).
-    /// </summary>
-    public const float TotemSideInset = 37f / 224f;
 }
