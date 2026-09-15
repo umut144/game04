@@ -17,6 +17,13 @@ world01 and SceneMaker, by name and by hardcoded relative path
 (`../../BevyProjects/world01`, `../SceneMaker`). There is no equivalent step,
 and no `POLYTOOLS_WORLD_DIR`-reading script, on the game04 side.
 
+**game04 must not depend on world01 or SceneMaker in any direction.** When
+PolyTools has exported, game04 should be able to sync directly — its own
+sync must not be gated on world01's or SceneMaker's steps, and it must not
+abort or skip just because world01 or SceneMaker are missing, broken, or
+fail their own sync. This is a hard requirement, not a preference: the two
+games share nothing except the PolyTools Catalog they both read.
+
 ## What Consumer Sync already does, for reference
 
 Read directly from `scripts/sync_world01_consumers.sh` and
@@ -87,32 +94,47 @@ is a description of the current mechanism, not a guess:
 
 ## The concrete ask
 
-Extend Consumer Sync with a game04 asset-content step, shaped like
-`sync_polytools_characters.sh` but for a Godot/C# consumer instead of
-Bevy/Rust:
+Give game04 its own Consumer Sync path, independent of
+`scripts/sync_world01_consumers.sh` end to end — not a new step wedged into
+that script's dependency chain, since that script is world01/SceneMaker's
+own orchestrator by name and by design, and wiring game04 into it would be
+exactly the coupling that must not exist. Concretely:
 
-1. A new script, e.g. `game04/scripts/sync_polytools_props.sh`, run the same
-   way as the existing steps: `env POLYTOOLS_WORLD_DIR=<world dir> <script>`,
-   added to `scripts/sync_world01_consumers.sh`'s step list as a third
-   independent sibling (it only needs the published Catalog, same as the
-   world01-content and SceneMaker-catalog steps).
-2. Catalog + manifest validation mirroring `sync_polytools_characters.sh`'s
-   `jq` contract (schema_version checks, asset_id/asset_key resolution,
-   region/component shape) — game04 doesn't need the character-specific
-   attachment-frame rules, but does need whatever `props`-category rules
-   apply.
-3. A game04-side design-data asset-key list to cross-check against, the
+1. A new, standalone orchestrator script, e.g. `scripts/sync_game04_consumers.sh`,
+   living beside (not inside) `sync_world01_consumers.sh`. Its only step —
+   "PolyTools -> game04 content" — needs nothing but the published Catalog,
+   so it has no dependency on world01's content step, SceneMaker's catalog
+   step, or SceneMaker's scene export, and its failure or absence must not
+   affect them either. This mirrors the independent-sibling shape
+   `sync_world01_consumers.sh` already uses for its own first two steps, just
+   without sharing a run with them.
+2. Whatever triggers PolyTools's export today (the `Sync Consumers` action in
+   the Runtime Export workspace) should run *both* orchestrators — or
+   `sync_game04_consumers.sh` gets its own trigger — but either way, one
+   failing must never block or skip the other. If it's simpler to keep a
+   single "Sync Consumers" button, it should call each orchestrator and
+   report both results independently, the same way `sync_world01_consumers.sh`
+   already reports per-step rather than failing as one lump.
+3. A game04-side sync script (e.g. `game04/scripts/sync_polytools_props.sh`,
+   invoked as `env POLYTOOLS_WORLD_DIR=<world dir> <script>` by the new
+   orchestrator), shaped like `sync_polytools_characters.sh` but for a
+   Godot/C# consumer instead of Bevy/Rust: catalog + manifest validation
+   mirroring its `jq` contract (schema_version checks, asset_id/asset_key
+   resolution, region/component shape) — game04 doesn't need the
+   character-specific attachment-frame rules, but does need whatever
+   `props`-category rules apply.
+4. A game04-side design-data asset-key list to cross-check against, the
    equivalent of world01's `crates/design/*.json` scrape. game04's own
    `design/cards/*.json` schema (see `docs/TASKS.md`, decision CORE-08) would
    need a field naming the PolyTools `asset_key` a card's visual art comes
    from, once that's added — this doesn't exist yet and is new scope on the
    game04 side, not just the PolyTools side.
-4. Staged output the Godot client can actually load — most likely
+5. Staged output the Godot client can actually load — most likely
    `game04/assets/props/<asset_key>/manifest.json` plus a flat
    `assets/catalog.json`, matching world01's `assets/<type>/<key>/` shape,
    but the exact directory convention is PolyTools's call since it already
    owns this pattern for two consumers.
-5. Something on the Godot side has to turn a manifest's 2D vector geometry
+6. Something on the Godot side has to turn a manifest's 2D vector geometry
    (`contour_stroke_mesh`, `closed_region_mesh`, per-component `mesh`) into
    actually-rendered Godot nodes (`Polygon2D`/`MeshInstance2D`, or a custom
    importer). World01's Rust-side interpreter
@@ -121,7 +143,9 @@ Bevy/Rust:
    script (`sync_polytools_world.sh` + however it renders what it receives)
    is a much closer precedent than world01's Rust code and worth comparing
    before game04 writes its own manifest interpreter from scratch — this
-   wasn't checked yet because SceneMaker wasn't part of this session.
+   wasn't checked yet because SceneMaker wasn't part of this session. (This
+   would only be a *precedent to read*, not a dependency: game04 still ends
+   up with its own script and its own copy of whatever logic it needs.)
 
 ## Open questions (need an answer before scoping this properly)
 

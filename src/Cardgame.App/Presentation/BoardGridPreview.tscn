@@ -16,10 +16,10 @@ color = Color(0.055, 0.09, 0.07, 1)
 
 [node name="OppTotemCell0" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.23538306
-anchor_top = 0.06250000
-anchor_right = 0.41179435
-anchor_bottom = 0.28830645
+anchor_left = 0.18750000
+anchor_top = 0.00000000
+anchor_right = 0.39583330
+anchor_bottom = 0.20000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OppTotemCell0"]
@@ -33,10 +33,10 @@ vertical_alignment = 1
 
 [node name="OppTotemCell1" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.41179435
-anchor_top = 0.06250000
-anchor_right = 0.58820565
-anchor_bottom = 0.28830645
+anchor_left = 0.39583330
+anchor_top = 0.00000000
+anchor_right = 0.60416670
+anchor_bottom = 0.20000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OppTotemCell1"]
@@ -50,10 +50,10 @@ vertical_alignment = 1
 
 [node name="OppTotemCell2" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.58820565
-anchor_top = 0.06250000
-anchor_right = 0.76461694
-anchor_bottom = 0.28830645
+anchor_left = 0.60416670
+anchor_top = 0.00000000
+anchor_right = 0.81250000
+anchor_bottom = 0.20000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OppTotemCell2"]
@@ -67,9 +67,9 @@ vertical_alignment = 1
 
 [node name="OppSlot0" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.23538306
-anchor_top = 0.28830645
-anchor_right = 0.32358871
+anchor_left = 0.18750000
+anchor_top = 0.20000000
+anchor_right = 0.29166670
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
 
@@ -84,9 +84,9 @@ vertical_alignment = 1
 
 [node name="OppSlot1" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.32358871
-anchor_top = 0.28830645
-anchor_right = 0.41179435
+anchor_left = 0.29166670
+anchor_top = 0.20000000
+anchor_right = 0.39583330
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
 
@@ -101,8 +101,8 @@ vertical_alignment = 1
 
 [node name="OppSlot2" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.41179435
-anchor_top = 0.28830645
+anchor_left = 0.39583330
+anchor_top = 0.20000000
 anchor_right = 0.50000000
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
@@ -119,8 +119,8 @@ vertical_alignment = 1
 [node name="OppSlot3" type="ColorRect" parent="."]
 layout_mode = 1
 anchor_left = 0.50000000
-anchor_top = 0.28830645
-anchor_right = 0.58820565
+anchor_top = 0.20000000
+anchor_right = 0.60416670
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
 
@@ -135,9 +135,9 @@ vertical_alignment = 1
 
 [node name="OppSlot4" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.58820565
-anchor_top = 0.28830645
-anchor_right = 0.67641129
+anchor_left = 0.60416670
+anchor_top = 0.20000000
+anchor_right = 0.70833330
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
 
@@ -152,9 +152,9 @@ vertical_alignment = 1
 
 [node name="OppSlot5" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.67641129
-anchor_top = 0.28830645
-anchor_right = 0.76461694
+anchor_left = 0.70833330
+anchor_top = 0.20000000
+anchor_right = 0.81250000
 anchor_bottom = 0.50000000
 color = Color(0.32, 0.24, 0.28, 1)
 
@@ -169,10 +169,10 @@ vertical_alignment = 1
 
 [node name="OwnSlot0" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.23538306
+anchor_left = 0.18750000
 anchor_top = 0.50000000
-anchor_right = 0.32358871
-anchor_bottom = 0.71169355
+anchor_right = 0.29166670
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot0"]
@@ -186,10 +186,10 @@ vertical_alignment = 1
 
 [node name="OwnSlot1" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.32358871
+anchor_left = 0.29166670
 anchor_top = 0.50000000
-anchor_right = 0.41179435
-anchor_bottom = 0.71169355
+anchor_right = 0.39583330
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot1"]
@@ -203,10 +203,10 @@ vertical_alignment = 1
 
 [node name="OwnSlot2" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.41179435
+anchor_left = 0.39583330
 anchor_top = 0.50000000
 anchor_right = 0.50000000
-anchor_bottom = 0.71169355
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot2"]
@@ -222,8 +222,8 @@ vertical_alignment = 1
 layout_mode = 1
 anchor_left = 0.50000000
 anchor_top = 0.50000000
-anchor_right = 0.58820565
-anchor_bottom = 0.71169355
+anchor_right = 0.60416670
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot3"]
@@ -237,10 +237,10 @@ vertical_alignment = 1
 
 [node name="OwnSlot4" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.58820565
+anchor_left = 0.60416670
 anchor_top = 0.50000000
-anchor_right = 0.67641129
-anchor_bottom = 0.71169355
+anchor_right = 0.70833330
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot4"]
@@ -254,10 +254,10 @@ vertical_alignment = 1
 
 [node name="OwnSlot5" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.67641129
+anchor_left = 0.70833330
 anchor_top = 0.50000000
-anchor_right = 0.76461694
-anchor_bottom = 0.71169355
+anchor_right = 0.81250000
+anchor_bottom = 0.80000000
 color = Color(0.22, 0.32, 0.4, 1)
 
 [node name="Label" type="Label" parent="OwnSlot5"]
@@ -271,10 +271,10 @@ vertical_alignment = 1
 
 [node name="OwnTotemCell0" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.23538306
-anchor_top = 0.71169355
-anchor_right = 0.41179435
-anchor_bottom = 0.93750000
+anchor_left = 0.18750000
+anchor_top = 0.80000000
+anchor_right = 0.39583330
+anchor_bottom = 1.00000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OwnTotemCell0"]
@@ -288,10 +288,10 @@ vertical_alignment = 1
 
 [node name="OwnTotemCell1" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.41179435
-anchor_top = 0.71169355
-anchor_right = 0.58820565
-anchor_bottom = 0.93750000
+anchor_left = 0.39583330
+anchor_top = 0.80000000
+anchor_right = 0.60416670
+anchor_bottom = 1.00000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OwnTotemCell1"]
@@ -305,10 +305,10 @@ vertical_alignment = 1
 
 [node name="OwnTotemCell2" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.58820565
-anchor_top = 0.71169355
-anchor_right = 0.76461694
-anchor_bottom = 0.93750000
+anchor_left = 0.60416670
+anchor_top = 0.80000000
+anchor_right = 0.81250000
+anchor_bottom = 1.00000000
 color = Color(0.72, 0.58, 0.2, 1)
 
 [node name="Label" type="Label" parent="OwnTotemCell2"]
@@ -322,8 +322,8 @@ vertical_alignment = 1
 
 [node name="BoardMidLine" type="ColorRect" parent="."]
 layout_mode = 1
-anchor_left = 0.23538306
+anchor_left = 0.18750000
 anchor_top = 0.49850000
-anchor_right = 0.76461694
+anchor_right = 0.81250000
 anchor_bottom = 0.50150000
 color = Color(0.85, 0.85, 0.85, 0.35)
