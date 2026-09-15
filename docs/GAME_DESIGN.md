@@ -853,6 +853,9 @@ and the cast — `Rogue`, `Wizard`, `Warrior`, `Sorcerer`, `ArcherF`, `Glavier`,
 `Mage`, `Barde`, `Monk`, `Hammerer` — plus item shapes such as `Heart`,
 `Potion`, `Orb`, `Bomb`, `Dagger`, `Bow`, `Arrow`, `Ankh`, `Lightning_Bolt`.
 
-The exported totems carry 11 (Life), 8 (Mana) and 9 (Time) components against a
-design of body + 7 segments. Reconcile before the totem presentation gate: the
+The client's copies are synced from there into
+`src/Cardgame.Client/assets/polytools/` (`TASKS.md`, `SYNC-02`).
+
+The exported totems carry 8 (Life), 8 (Mana) and 9 (Time) components against a
+design of body + 7 segments, so Time has one segment too many. Reconcile before the totem presentation gate: the
 segment count is a gameplay value, not only a model detail.

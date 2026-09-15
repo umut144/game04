@@ -21,16 +21,15 @@ Read `AGENTS.md` first — its rules are what every row has to stay inside.
 
 **Where this stands.** The G00 spec round is settled (decisions `CORE-01`
 through `CORE-12` below, under **Settled**). `Cardgame.Core` and the rest of
-the solution shells now exist with G00's tests in place, pending a check run.
+the solution shells now exist with G00's tests in place. In G01 the board geometry is settled (`LAYOUT-01`, `docs/BOARD_DESIGN.md`) and PolyTools's singles are synced into `src/Cardgame.Client/assets/polytools/` (`SYNC-02`); the simulation half of G01 — totem placement — is next.
 
 ## Active Tasks
 
 | ID | Area | Outcome | Status |
 |---|---|---|---|
-| `ASSET-01` | Assets | Reconcile the totem segment counts. The design says body plus **7** segments for each totem (`GAME_DESIGN.md` §5); the PolyTools exports carry 11 components for Life, 8 for Mana and 9 for Time. Mana matches, the other two do not. The segment count is a gameplay value — Life's HP and Mana's supply are read off it — so this is not a modelling detail that can be settled in the presentation gate. | **Blocked on G06** — wanted before the totems are drawn |
+| `ASSET-01` | Assets | Reconcile the totem segment counts. The design says body plus **7** segments for each totem (`GAME_DESIGN.md` §5); as synced on 2026-09-15 the PolyTools exports carry 8 components for Life, 8 for Mana and 9 for Time (body plus `segment01`–`segment08`). Life and Mana match; Time has one segment too many. The segment count is a gameplay value — Life's HP and Mana's supply are read off it — so this is not a modelling detail that can be settled in the presentation gate. | **Blocked on G06** — wanted before the totems are drawn |
 | `TEST-01` | Combat | Pin the Human bomb bonus with a test. That +1 Radius does **not** extend a thrown card's reach against totems is a deliberate balance decision (`GAME_DESIGN.md` §8.4), but it is *emergent*: it falls out of `floor(2R/3)` being equal for 3 and 4. Change the surcharge formula and the decision changes silently. A comment will not hold it; an assertion will. | **Blocked on G06** |
 | `DOC-01` | Documentation | Decide how the data-allowance notice reaches an agent that starts at `AGENTS.md`. In all four repositories the link runs one way — every `CLAUDE.md` says to read `AGENTS.md` in full, and no `AGENTS.md` requires `CLAUDE.md` in return — so an agent following the AGENTS convention never sees it. Either repeat the notice in each `AGENTS.md`, or add one line making `CLAUDE.md` required reading and keep the text in one place. Spans all four repositories, not just this one. | **Open** |
-| `SYNC-01` | Assets / Tooling | Get PolyTools's assets into game04. Shape settled in `SYNC-02`; the decision was sent to PolyTools (`docs/requests/polytools-consumer-sync-request.md`). `scripts/sync_polytools_assets.sh` is in place here (validates Manifest 23, refuses renamed or withdrawn design keys and singles that reference a set or palette, swaps `src/Cardgame.Client/assets/polytools/` as a whole); PolyTools calls it from `sync_game04_consumers.sh`. When `design/cards/*.json` gains its asset-key field in G02, add it to `design_asset_keys()` in that script. Done when a Sync Consumers run fills `src/Cardgame.Client/assets/polytools/` and the result is committed. | **Waiting on the first Sync Consumers run** |
 
 ## Optional Later
 
