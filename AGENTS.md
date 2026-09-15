@@ -46,7 +46,7 @@ settles it. Layered strictly downwards — nothing ever references upwards.
 | --- | --- | --- |
 | `src/Cardgame.Core` | nothing | world state, commands, events, systems, snapshot projection, card and board data |
 | `src/Cardgame.Server` | Core | lobby, match runner, command queue, the authoritative clock |
-| `src/Cardgame.App` | Core | the Godot client: layout, drawing, animation, input plumbing |
+| `src/Cardgame.Client` | Core | the Godot client: layout, drawing, animation, input plumbing |
 | `src/Cardgame.Cli` | Core | headless match runner — plays a command list from a seed and prints the resulting state |
 | `tests/Cardgame.Core.Tests` | Core, TestSupport | |
 | `tests/Cardgame.TestSupport` | Core | fixtures shared by the test projects |
@@ -56,15 +56,15 @@ Four rules follow from this:
 - **`Core` must not reference Godot.** Not the SDK, not a type, not a `using`.
   It is a plain .NET class library so that `dotnet test` runs the rules without
   an engine anywhere in sight.
-- **There are no tests against `Cardgame.App`.** A test project cannot reference
+- **There are no tests against `Cardgame.Client`.** A test project cannot reference
   it without pulling in `Godot.NET.Sdk`. The corollary is the useful half:
   anything worth testing belongs in `Core`. If a rule is hard to test, it is in
   the wrong project.
 - **The client never resolves a rule.** It sends commands and renders snapshots.
-  `App` references `Core` for those types only. If the types ever have to ship
+  `Client` references `Core` for those types only. If the types ever have to ship
   without the rules — a web client, say — they move into a project of their own;
   until then this is a discipline, not a compiler boundary.
-- **`Server` and `App` never reference each other.** They talk over the network.
+- **`Server` and `Client` never reference each other.** They talk over the network.
 
 ## Engineering
 

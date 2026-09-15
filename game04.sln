@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Core", "src\Cardga
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Server", "src\Cardgame.Server\Cardgame.Server.csproj", "{AF3B37AA-D9E1-4BFF-8561-A6D9B11FEA48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.App", "src\Cardgame.App\Cardgame.App.csproj", "{BBC6CA73-3A96-47F3-B612-D4272A2F8359}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Client", "src\Cardgame.Client\Cardgame.Client.csproj", "{BBC6CA73-3A96-47F3-B612-D4272A2F8359}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cardgame.Cli", "src\Cardgame.Cli\Cardgame.Cli.csproj", "{51DC4509-B465-4706-8AB5-D4E04935C73D}"
 EndProject

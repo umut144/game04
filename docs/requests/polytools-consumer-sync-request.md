@@ -1,27 +1,30 @@
-Subject: game04 needs Consumer Sync too
+# game04: Entscheidungen zum Consumer Sync
 
-Hey — game04 needs the `card` and the three totem props synced from
-PolyTools, same as world01 already gets. Two things:
+Dein Plan passt, mit diesen Änderungen:
 
-1. It needs its own sync script, fully separate from world01/SceneMaker's
-   `sync_world01_consumers.sh` — no dependency either direction. If world01
-   or SceneMaker are broken or missing, game04's sync should still run; and
-   game04 syncing shouldn't touch or block them either.
+1. **Pfad:** Das Godot-Projekt heißt jetzt `src/Cardgame.Client/` (vorher
+   `Cardgame.App` – macOS hat den Ordner als Programm angezeigt). Ziel ist
+   `src/Cardgame.Client/assets/polytools/<typ>/<key>/manifest.json` plus
+   `catalog.json`.
+2. **Umfang:** Keine Auswahlliste. Alle Asset-Typen, aber **nur Singles** –
+   Sets und Palettes nicht. Abbrechen, wenn ein Single auf ein Set oder eine
+   Palette verweist (die wären dann nicht da).
+3. **Key-Prüfung:** Die Keys, die game04 nutzt, stehen in
+   `design/asset_keys.json` (`.asset_keys[]`, derzeit `card` und die drei
+   Totems). Ab G02 kommt pro Karte ein eigener Key in `design/cards/*.json`
+   dazu – das Feld gibt es noch nicht, das Skript sollte es aber später
+   leicht mitlesen können. Umbenannt oder zurückgezogen → Abbruch vor dem
+   Austausch, mit denselben Meldungen wie bei world01. `design/` wird nur
+   gelesen, nie geschrieben.
+4. **Commit:** Die gesyncten Dateien werden in game04 committet. Die
+   `.gitignore` ignoriert `.polytools-staging.*/` und `.polytools-backup.*/`
+   bereits – die Namen also bitte so lassen.
+5. **Unverändert:** eigener Orchestrator `sync_game04_consumers.sh`, der
+   Button startet beide Skripte als getrennte Prozesse (das zweite läuft
+   auch, wenn das erste scheitert), fünf Zeilen in der Checkliste, rot
+   sobald eine rot ist. Standardpfad `../game04`, überschreibbar über
+   `GAME04_PROJECT_DIR`. World bleibt `worlds/world01/`,
+   `POLYTOOLS_WORLD_DIR` überschreibbar. `.gdignore` in den temporären
+   Ordnern ist ok. `ASSET-01` ist kein Sync-Thema.
 
-2. Shape-wise, just copy what world01's `sync_polytools_characters.sh`
-   already does: read `POLYTOOLS_WORLD_DIR/catalog.json`, validate schema,
-   check our own design-data keys resolve, validate each manifest, atomic
-   swap into `game04/assets/...`. Nothing new to invent — a game04 copy of
-   that script plus its own tiny orchestrator.
-
-Open questions before starting:
-
-- Does game04 get its own PolyTools World, or keep sharing `worlds/world01/`
-  where `card`/`totem_of_*` already live?
-- Is SceneMaker Godot? If so its render-from-manifest code might save us
-  writing our own from scratch.
-- The totems currently have the wrong segment count (11/8/9 vs. the 7 the
-  design wants — tracked as `ASSET-01`). Fine to sync now and re-sync once
-  that's fixed.
-
-That's it — just wire game04 in as a second, independent consumer.
+Details stehen in game04s `docs/TASKS.md` unter `SYNC-02`.

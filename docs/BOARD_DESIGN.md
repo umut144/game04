@@ -7,7 +7,7 @@ on screen. Nothing here constrains or is constrained by simulation code:
 `Cardgame.Core.Board.BoardSide` knows slot counts and column pairs, never
 pixels.
 
-Implemented in `src/Cardgame.App/Presentation/BoardLayoutSpec.cs`, which holds
+Implemented in `src/Cardgame.Client/Presentation/BoardLayoutSpec.cs`, which holds
 these numbers as anchor fractions (0..1 of the viewport), not raw pixels, so
 the layout carries over unchanged at any resolution sharing the same 16:10
 aspect. The pixel figures below are all against a 1920x1200 reference

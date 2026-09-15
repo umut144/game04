@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Cardgame.App.Presentation;
+namespace Cardgame.Client.Presentation;
 
 /// <summary>
 /// G01 board grid geometry, expressed as fractions of the design viewport

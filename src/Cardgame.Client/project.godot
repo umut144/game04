@@ -4,7 +4,7 @@
 ;
 ; G01: BoardGridPreview is a provisional evaluation scene, not the real game
 ; scene. It shows the board-grid geometry proposed in docs/TASKS.md's G01
-; layout math (see Cardgame.App/Presentation/BoardLayoutSpec.cs) so it can be
+; layout math (see Cardgame.Client/Presentation/BoardLayoutSpec.cs) so it can be
 ; judged on the client before the layout is settled. Swap main_scene once a
 ; real menu/match scene exists.
 ;
@@ -29,4 +29,4 @@ window/stretch/aspect="keep"
 
 [dotnet]
 
-project/assembly_name="Cardgame.App"
+project/assembly_name="Cardgame.Client"

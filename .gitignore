@@ -25,6 +25,13 @@ export_presets.cfg
 *.userprefs
 *.suo
 
+# --- PolyTools sync --------------------------------------------------------
+# The sync stages the new assets and parks the old ones beside the target and
+# removes both when it finishes; these only survive a sync that was killed.
+# The synced assets themselves are committed.
+.polytools-staging.*/
+.polytools-backup.*/
+
 # --- the check watcher's answers -----------------------------------------
 .agent-check/
 
