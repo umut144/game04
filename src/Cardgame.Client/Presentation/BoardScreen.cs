@@ -1,0 +1,265 @@
+using System.Collections.Generic;
+using Cardgame.Core;
+using Cardgame.Core.Board;
+using Cardgame.Core.Commands;
+using Cardgame.Core.Design;
+using Cardgame.Core.Model;
+using Cardgame.Core.Snapshot;
+using Cardgame.Core.Systems;
+using Godot;
+
+namespace Cardgame.Client.Presentation;
+
+/// <summary>
+/// G01's board: the grid of <see cref="BoardLayoutSpec"/>, the rolled totem
+/// layout as labelled placeholders, and blank cards placed and removed by
+/// clicking a slot. It draws a <see cref="PlayerView"/> and sends commands;
+/// it decides nothing itself.
+///
+/// Dev bootstrap: there is no server yet, so this node holds the world and
+/// applies commands to it directly, always showing PlayerA's view (own side
+/// at the bottom). Clicking the opponent's row places for PlayerB, so both
+/// sides can be tried from one screen. R rolls a new seed, M switches the
+/// mirror mode.
+///
+/// Both rows count 1-6 from the left and the totem places run A, B, C from
+/// the left on both sides: the view is mirrored, not turned, so slot n faces
+/// slot n (BoardGeometry).
+/// </summary>
+public partial class BoardScreen : Control
+{
+    private static readonly Color Background = new(0.055f, 0.09f, 0.07f);
+    private static readonly Color CellFill = new(0.10f, 0.14f, 0.12f);
+    private static readonly Color CellBorder = new(0.30f, 0.36f, 0.33f);
+    private static readonly Color OwnSlotFill = new(0.13f, 0.19f, 0.25f);
+    private static readonly Color OpponentSlotFill = new(0.22f, 0.14f, 0.17f);
+    private static readonly Color CardFill = new(0.90f, 0.86f, 0.76f);
+    private static readonly Color CardBorder = new(0.35f, 0.30f, 0.22f);
+    private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
+
+    // The totem inside its 400-wide cell is 300 wide (BOARD_DESIGN.md).
+    private const float TotemInset = 50f / 400f;
+
+    private readonly CardCatalog _catalog = DesignCatalogLoader.LoadFromSources(
+        new Dictionary<string, string>(), new Dictionary<string, string>());
+
+    private readonly Dictionary<(PlayerId Player, int Slot), Panel> _cards = new();
+    private readonly Dictionary<(PlayerId Player, int Slot), Label> _cardLabels = new();
+    private readonly Dictionary<(PlayerId Player, TotemPosition Position), Panel> _totems = new();
+    private readonly Dictionary<(PlayerId Player, TotemPosition Position), Label> _totemLabels = new();
+
+    private const PlayerId Viewer = PlayerId.PlayerA;
+
+    private WorldState _world = null!;
+    private ulong _seed = 1;
+    private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
+    private Label _info = null!;
+
+    public override void _Ready()
+    {
+        AddChild(MakeRect(Background, 0f, 0f, 1f, 1f));
+        BuildTotemRow(PlayerIds.Opponent(Viewer), 0);
+        BuildSlotRow(PlayerIds.Opponent(Viewer), 1, OpponentSlotFill);
+        BuildSlotRow(Viewer, 2, OwnSlotFill);
+        BuildTotemRow(Viewer, 3);
+        BuildInfo();
+        NewMatch();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key)
+        {
+            return;
+        }
+
+        if (key.Keycode == Key.R)
+        {
+            _seed++;
+            NewMatch();
+        }
+        else if (key.Keycode == Key.M)
+        {
+            _mirrorMode = _mirrorMode == MirrorMode.ShuffledMirror
+                ? MirrorMode.PerfectMirror
+                : MirrorMode.ShuffledMirror;
+            NewMatch();
+        }
+    }
+
+    private void NewMatch()
+    {
+        var command = new SetupMatchCommand
+        {
+            Seed = _seed,
+            MirrorMode = _mirrorMode,
+            PlayerADeckDefinitionIds = System.Array.Empty<string>(),
+            PlayerBDeckDefinitionIds = System.Array.Empty<string>(),
+        };
+        _world = MatchSetupSystem.Apply(command, _catalog).World;
+        Refresh();
+    }
+
+    private void OnSlotInput(InputEvent @event, PlayerId player, int slot)
+    {
+        if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+        {
+            return;
+        }
+
+        if (_world.Board.Side(player).IsOccupied(slot))
+        {
+            BoardPlacementSystem.Apply(_world, new ClearSlotCommand { Player = player, Slot = slot });
+        }
+        else
+        {
+            BoardPlacementSystem.Apply(_world, new PlaceBlankCardCommand { Player = player, Slot = slot });
+        }
+
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        var view = ProjectionSystem.Project(_world, Viewer);
+        Render(Viewer, view.OwnBoard);
+        Render(PlayerIds.Opponent(Viewer), view.OpponentBoard);
+
+        string mode = _mirrorMode == MirrorMode.ShuffledMirror ? "Shuffled Mirror" : "Perfect Mirror";
+        _info.Text =
+            $"G01 board preview\n\nseed {_seed}\n{mode}\n\n" +
+            "R  new seed\nM  switch mirror mode\nclick a slot  place / remove\n        a blank card\n\n" +
+            "top row: opponent\nbottom row: you";
+    }
+
+    private void Render(PlayerId player, BoardSideView board)
+    {
+        for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
+        {
+            var occupant = board.UnitSlots[slot - 1];
+            _cards[(player, slot)].Visible = occupant.HasValue;
+            _cardLabels[(player, slot)].Text = occupant?.ToString() ?? string.Empty;
+        }
+
+        foreach (var placement in board.Totems)
+        {
+            var panel = _totems[(player, placement.Position)];
+            panel.AddThemeStyleboxOverride("panel", MakeStyle(TotemColour(placement.Type), CellBorder, 2));
+            _totemLabels[(player, placement.Position)].Text = $"Totem of {placement.Type}\n{placement.Position}";
+        }
+    }
+
+    private void BuildSlotRow(PlayerId player, int band, Color slotFill)
+    {
+        var rows = BoardLayoutSpec.RowFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
+        for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
+        {
+            var cell = MakePanel(slotFill, CellBorder, columns[slot - 1], rows[band], columns[slot], rows[band + 1]);
+            cell.MouseFilter = MouseFilterEnum.Stop;
+            cell.MouseDefaultCursorShape = CursorShape.PointingHand;
+            int capturedSlot = slot;
+            cell.GuiInput += @event => OnSlotInput(@event, player, capturedSlot);
+            cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
+            AddChild(cell);
+
+            // The card fills its 200x300 slot exactly (BOARD_DESIGN.md).
+            var card = MakePanel(CardFill, CardBorder, 0f, 0f, 1f, 1f);
+            card.Visible = false;
+            var cardLabel = MakeLabel(string.Empty, 18, CardBorder);
+            card.AddChild(cardLabel);
+            cell.AddChild(card);
+            _cards[(player, slot)] = card;
+            _cardLabels[(player, slot)] = cardLabel;
+        }
+    }
+
+    private void BuildTotemRow(PlayerId player, int band)
+    {
+        var rows = BoardLayoutSpec.RowFractions;
+        var columns = BoardLayoutSpec.ColumnFractions;
+        foreach (var (left, right) in BoardLayoutSpec.TotemCellSpans)
+        {
+            var position = (TotemPosition)(left / 2);
+            var cell = MakePanel(CellFill, CellBorder, columns[left], rows[band], columns[right], rows[band + 1]);
+            AddChild(cell);
+
+            var totem = MakePanel(CellFill, CellBorder, TotemInset, 0f, 1f - TotemInset, 1f);
+            var label = MakeLabel(string.Empty, 22, Colors.White);
+            totem.AddChild(label);
+            cell.AddChild(totem);
+            _totems[(player, position)] = totem;
+            _totemLabels[(player, position)] = label;
+        }
+    }
+
+    private void BuildInfo()
+    {
+        var columns = BoardLayoutSpec.ColumnFractions;
+        var margin = MakeRect(Background, 0f, 0f, columns[0], 1f);
+        _info = MakeLabel(string.Empty, 20, DimText);
+        _info.HorizontalAlignment = HorizontalAlignment.Left;
+        _info.VerticalAlignment = VerticalAlignment.Top;
+        _info.OffsetLeft = 24;
+        _info.OffsetTop = 72;
+        margin.AddChild(_info);
+        AddChild(margin);
+    }
+
+    private static Color TotemColour(TotemType type) => type switch
+    {
+        TotemType.Life => new Color(0.62f, 0.16f, 0.16f),
+        TotemType.Mana => new Color(0.17f, 0.33f, 0.70f),
+        TotemType.Time => new Color(0.72f, 0.54f, 0.12f),
+        _ => CellFill,
+    };
+
+    private static ColorRect MakeRect(Color colour, float left, float top, float right, float bottom)
+    {
+        var rect = new ColorRect { Color = colour, MouseFilter = MouseFilterEnum.Ignore };
+        Place(rect, left, top, right, bottom);
+        return rect;
+    }
+
+    private static Panel MakePanel(Color fill, Color border, float left, float top, float right, float bottom)
+    {
+        var panel = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+        panel.AddThemeStyleboxOverride("panel", MakeStyle(fill, border, 2));
+        Place(panel, left, top, right, bottom);
+        return panel;
+    }
+
+    private static StyleBoxFlat MakeStyle(Color fill, Color border, int borderWidth)
+    {
+        var style = new StyleBoxFlat { BgColor = fill, BorderColor = border };
+        style.SetBorderWidthAll(borderWidth);
+        return style;
+    }
+
+    private static Label MakeLabel(string text, int fontSize, Color colour)
+    {
+        var label = new Label
+        {
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        label.AddThemeFontSizeOverride("font_size", fontSize);
+        label.AddThemeColorOverride("font_color", colour);
+        Place(label, 0f, 0f, 1f, 1f);
+        return label;
+    }
+
+    private static void Place(Control control, float left, float top, float right, float bottom)
+    {
+        control.AnchorLeft = left;
+        control.AnchorTop = top;
+        control.AnchorRight = right;
+        control.AnchorBottom = bottom;
+        control.OffsetLeft = 0;
+        control.OffsetTop = 0;
+        control.OffsetRight = 0;
+        control.OffsetBottom = 0;
+    }
+}

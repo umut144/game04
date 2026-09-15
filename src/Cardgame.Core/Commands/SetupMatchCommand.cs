@@ -3,10 +3,9 @@ namespace Cardgame.Core.Commands;
 using Cardgame.Core.Model;
 
 /// <summary>
-/// Sets a match up: build both decks from the given definitions and shuffle
-/// them (seeded, per the chosen mirror mode - CORE-03) into the starting
-/// WorldState. G00's match setup stops there - no starting hand is dealt yet
-/// (deliberately: see docs/TASKS.md on why that is G04's job).
+/// Sets a match up: both decks built from the given definitions and
+/// shuffled, both totem layouts rolled — seeded, per the chosen mirror mode
+/// (CORE-03). No starting hand is dealt (CORE-10).
 /// </summary>
 public sealed record SetupMatchCommand : ICommand
 {

@@ -2,22 +2,17 @@
 ; It's best edited using the editor UI and not directly, since the parameters
 ; that go here are meant to be edited by the editor.
 ;
-; G01: BoardGridPreview is a provisional evaluation scene, not the real game
-; scene. It shows the board-grid geometry proposed in docs/TASKS.md's G01
-; layout math (see Cardgame.Client/Presentation/BoardLayoutSpec.cs) so it can be
-; judged on the client before the layout is settled. Swap main_scene once a
-; real menu/match scene exists.
-;
-; The viewport is 1920x1200 -- the developer's own reference resolution for
-; the LAYOUT-01 derivation, exactly 3/4 of the original 2560x1600 design
-; viewport (same 16:10 aspect, same anchor fractions either way).
+; G01: BoardScreen shows the board grid (docs/BOARD_DESIGN.md) with the rolled
+; totem layout and blank cards, running the match locally as a dev bootstrap
+; until a server exists. The viewport is the 1920x1200 reference of
+; BOARD_DESIGN.md; the layout itself is anchored, not pixel-bound.
 
 config_version=5
 
 [application]
 
 config/name="game04"
-run/main_scene="res://Presentation/BoardGridPreview.tscn"
+run/main_scene="res://Presentation/BoardScreen.tscn"
 config/features=PackedStringArray("4.7", "C#")
 
 [display]

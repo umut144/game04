@@ -5,9 +5,9 @@ using Cardgame.Core.Model;
 using Cardgame.Core.Zones;
 
 /// <summary>
-/// The whole state of one match (§3, §6, §7): board geometry, zones and the
-/// match seed. Everything that reads or writes this state beyond setup
-/// (turn clock enforcement, card play, combat, ...) arrives gate by gate.
+/// The whole state of one match (§3, §6, §7): board, zones and the match
+/// seed. Everything that reads or writes this state beyond setup arrives
+/// gate by gate.
 /// </summary>
 public sealed class WorldState
 {
@@ -16,6 +16,12 @@ public sealed class WorldState
     public BoardState Board { get; }
     public PlayerZones PlayerA { get; }
     public PlayerZones PlayerB { get; }
+
+    /// <summary>
+    /// The one source of card instance ids for the whole match, so a card
+    /// created after setup never reuses a deck card's id.
+    /// </summary>
+    public CardInstanceIdGenerator CardIds { get; } = new();
 
     public WorldState(ulong seed, MirrorMode mirrorMode)
     {

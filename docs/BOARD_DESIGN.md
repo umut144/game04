@@ -87,5 +87,5 @@ Anywhere else at the same 16:10 aspect, multiply by (viewport width / 1920)
   the exports; the Totem of Time carries one segment more than the other two
   (`GAME_DESIGN.md` §5).
 - The art is synced (`SYNC-02`, `src/Cardgame.Client/assets/polytools/`), but
-  nothing draws a manifest yet — `BoardGridPreview.tscn` still shows
-  placeholder colored cells at these exact proportions.
+  nothing draws a manifest yet — `BoardScreen` (`src/Cardgame.Client/Presentation/`)
+  shows the totems and cards as placeholders at these exact proportions.

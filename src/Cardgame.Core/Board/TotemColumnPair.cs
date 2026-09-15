@@ -1,10 +1,8 @@
 namespace Cardgame.Core.Board;
 
 /// <summary>
-/// One of a side's three totem column pairs (§3, §4). G00 models only the
-/// geometry - three anonymous pairs per side. Which totem (Life/Mana/Time)
-/// sits in which pair, and its randomisation, is G01's job, not G00's
-/// (CORE-08).
+/// The two unit columns a totem place stands behind (§3, §4).
+/// <see cref="StandardPairs"/> is indexed by <see cref="TotemPosition"/>.
 /// </summary>
 public readonly record struct TotemColumnPair(int FirstColumn, int SecondColumn)
 {

@@ -2,7 +2,7 @@ namespace Cardgame.Core.Zones;
 
 using Cardgame.Core.Model;
 
-/// <summary>The three zones one player owns in G00 (§8.3). Board occupancy
+/// <summary>The three zones one player owns (§8.3). Board occupancy
 /// is tracked on <see cref="Board.BoardState"/> instead, since it is shared
 /// board geometry rather than a player-private list.</summary>
 public sealed class PlayerZones

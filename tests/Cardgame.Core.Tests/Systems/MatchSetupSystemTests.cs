@@ -95,7 +95,7 @@ public sealed class MatchSetupSystemTests
     }
 
     [Fact]
-    public void BoardGeometryHasSixSlotsAndThreeAnonymousTotemColumnPairsPerSide()
+    public void EachSideStartsWithSixEmptySlotsAndThreeTotems()
     {
         var catalog = TestCardDesigns.BuildCatalog();
         var command = new SetupMatchCommand
@@ -112,5 +112,8 @@ public sealed class MatchSetupSystemTests
         Assert.Equal(3, world.Board.PlayerA.TotemColumnPairs.Count);
         Assert.Equal(6, world.Board.PlayerB.UnitSlots.Count);
         Assert.Equal(3, world.Board.PlayerB.TotemColumnPairs.Count);
+        Assert.Equal(3, world.Board.PlayerA.Totems.Count);
+        Assert.Equal(3, world.Board.PlayerB.Totems.Count);
+        Assert.All(world.Board.PlayerA.UnitSlots, slot => Assert.Null(slot));
     }
 }

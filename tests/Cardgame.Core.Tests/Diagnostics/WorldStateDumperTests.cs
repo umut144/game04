@@ -28,5 +28,7 @@ public sealed class WorldStateDumperTests
         Assert.Contains("seed=2026", dump);
         Assert.Contains("PlayerA: deck=8 hand=0 destroyed=0", dump);
         Assert.Contains("PlayerB: deck=8 hand=0 destroyed=0", dump);
+        Assert.Contains("PlayerA board: totems=A:", dump);
+        Assert.Contains("slots=[-,-,-,-,-,-]", dump);
     }
 }

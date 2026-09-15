@@ -2,13 +2,14 @@ namespace Cardgame.Core.Diagnostics;
 
 using System.Text;
 using Cardgame.Core;
+using Cardgame.Core.Board;
+using Cardgame.Core.Model;
 using Cardgame.Core.Snapshot;
 using Cardgame.Core.Zones;
 
 /// <summary>
-/// The plain-text dump that is G00's only "view" (ROADMAP.md, G00). A
-/// test/debug helper exercised from assertions, not a program a developer
-/// runs by hand (see docs/TASKS.md).
+/// A plain-text dump of the world or of one player's view. A test/debug
+/// helper exercised from assertions, not a program run by hand (CORE-11).
 /// </summary>
 public static class WorldStateDumper
 {
@@ -18,6 +19,8 @@ public static class WorldStateDumper
         text.AppendLine($"seed={world.Seed} mirror={world.MirrorMode}");
         AppendPlayer(text, "PlayerA", world.PlayerA);
         AppendPlayer(text, "PlayerB", world.PlayerB);
+        AppendBoard(text, "PlayerA board", world.Board.PlayerA.Totems, world.Board.PlayerA.UnitSlots);
+        AppendBoard(text, "PlayerB board", world.Board.PlayerB.Totems, world.Board.PlayerB.UnitSlots);
         return text.ToString();
     }
 
@@ -31,6 +34,8 @@ public static class WorldStateDumper
         text.AppendLine(
             $"opponent: hand={view.OpponentHandCount} deck={view.OpponentDeckCount} " +
             $"destroyed=[{string.Join(",", view.OpponentDestroyed)}]");
+        AppendBoard(text, "own board", view.OwnBoard.Totems, view.OwnBoard.UnitSlots);
+        AppendBoard(text, "opponent board", view.OpponentBoard.Totems, view.OpponentBoard.UnitSlots);
         return text.ToString();
     }
 
@@ -38,5 +43,17 @@ public static class WorldStateDumper
     {
         text.AppendLine(
             $"{label}: deck={zones.Deck.Cards.Count} hand={zones.Hand.Cards.Count} destroyed={zones.Destroyed.Cards.Count}");
+    }
+
+    // e.g. "PlayerA board: totems=A:Life B:Time C:Mana slots=[card#3,-,-,-,-,-]"
+    private static void AppendBoard(
+        StringBuilder text,
+        string label,
+        IReadOnlyList<TotemPlacement> totems,
+        IReadOnlyList<CardInstanceId?> slots)
+    {
+        string totemText = string.Join(" ", totems.Select(t => $"{t.Position}:{t.Type}"));
+        string slotText = string.Join(",", slots.Select(s => s?.ToString() ?? "-"));
+        text.AppendLine($"{label}: totems={totemText} slots=[{slotText}]");
     }
 }

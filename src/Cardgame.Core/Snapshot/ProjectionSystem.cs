@@ -8,7 +8,7 @@ public static class ProjectionSystem
 {
     public static PlayerView Project(WorldState world, PlayerId viewer)
     {
-        PlayerId opponent = Opponent(viewer);
+        PlayerId opponent = PlayerIds.Opponent(viewer);
         var own = world.Zones(viewer);
         var other = world.Zones(opponent);
 
@@ -22,14 +22,8 @@ public static class ProjectionSystem
             OpponentDeckCount = other.Deck.Cards.Count,
             OwnDestroyed = own.Destroyed.Cards.Select(card => card.Id).ToArray(),
             OpponentDestroyed = other.Destroyed.Cards.Select(card => card.Id).ToArray(),
-            Board = world.Board,
+            OwnBoard = BoardSideView.CopyOf(world.Board.Side(viewer)),
+            OpponentBoard = BoardSideView.CopyOf(world.Board.Side(opponent)),
         };
     }
-
-    private static PlayerId Opponent(PlayerId player) => player switch
-    {
-        PlayerId.PlayerA => PlayerId.PlayerB,
-        PlayerId.PlayerB => PlayerId.PlayerA,
-        _ => throw new ArgumentOutOfRangeException(nameof(player)),
-    };
 }
