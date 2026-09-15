@@ -74,7 +74,10 @@ Own back:        [ Totem ][ Totem ][ Totem ]           3 totems, 2 columns each
   start (see §2 for how the two sides relate).
 - Adjacency is horizontal within one side. Slot 4 opposes slot 4.
 
-Canonical layout reference: `concepts/board_field.JPG`.
+Canonical layout reference: `concepts/board_field.JPG`. Pixel-level grid
+measurements (column/cell/margin sizes for the actual on-screen layout) are
+in `BOARD_DESIGN.md`, not here — this section is topology, that one is
+geometry.
 
 ## 4. Totem protection
 
