@@ -14,30 +14,28 @@ namespace Cardgame.App.Presentation;
 /// worked out against a 1920x1200 reference (chosen only because the
 /// arithmetic is easier at that size; it is exactly 3/4 of the 2560x1600
 /// design viewport used earlier in the G01 spec round, same 16:10 ratio,
-/// same resulting fractions):
+/// same resulting fractions). This is the settled version -- it resolves
+/// the card/totem-fit question the first pass left open.
 ///
-/// The board is a 1200x1200 square centered horizontally in the
-/// 1920-wide viewport (360px margin each side) but using the *full*
-/// viewport height — no vertical margin is reserved in this pass, so
-/// hand/HUD chrome would need to live in the generous side margins
-/// instead of a top/bottom bar. The square splits into two 1200x600
-/// halves (opponent / own); each half's 600 splits 240 (totem row) :
-/// 360 (unit row), a 2:5 / 3:5 split chosen directly by the developer,
-/// not derived from the footprints. A unit column is 1200/6 = 200 wide;
-/// a totem cell is 2 columns = 400 wide.
+/// The field is 1200 wide, centered horizontally in the 1920-wide
+/// viewport (360px margin each side). A unit column is 1200/6 = 200
+/// wide; a totem cell is 2 columns = 400 wide (a totem cell is always
+/// exactly 2 unit columns, forced by <c>concepts/board_field.JPG</c>'s
+/// grid lines running continuously top to bottom).
 ///
-/// Both target footprints check out via their own aspect ratio at these
-/// row heights: a totem at height 240 and the declared 160:128 (5:4)
-/// ratio comes out 300 wide, leaving 50px of centered margin either side
-/// of its 400-wide cell. A card at height 360 and the declared 60:90
-/// (2:3) ratio comes out 240 wide -- 40 *wider* than its 200-wide column,
-/// the opposite situation from the totem. Whether that's meant to read as
-/// cards overlapping their neighbours by ~20px a side, or whether cards
-/// should instead be held to the 200 column width (200x300, with 30px of
-/// vertical margin top/bottom to match how the totem gets margin) is an
-/// open question in `LAYOUT-01` -- this spec only encodes the grid's slot
-/// *boundaries*, not how card art is meant to sit inside a slot once that
-/// question is settled.
+/// Row heights are chosen so each shape fits its own axis with zero
+/// distortion:
+/// - A unit/card row is exactly 300 tall, so a 200x300 cell holds the
+///   declared 60:90 (2:3) card ratio with zero padding and zero overlap
+///   -- 200:300 reduces to exactly 2:3.
+/// - A totem row is 240 tall, so the declared 160:128 (5:4) totem ratio
+///   comes out 300 wide inside the 400-wide cell, leaving a clean,
+///   deliberate 50px of centered margin either side.
+/// Two totem rows (240 each) and two unit rows (300 each) sum to 1080,
+/// 120px short of the 1200-tall viewport; rather than pad each unit row
+/// internally (the card fits its row exactly, no internal margin), that
+/// 120px is pushed to the *outside* of the field as a 60px top and 60px
+/// bottom margin, symmetric with the 360px side margins.
 ///
 /// This is presentation-only geometry. It has no bearing on and is not
 /// read by anything in Cardgame.Core; BoardSide's slot/column-pair model
@@ -54,21 +52,21 @@ public static class BoardLayoutSpec
 
     /// <summary>
     /// Vertical fractions (0..1) of the 5 row boundaries, top to bottom:
-    /// [0] top edge of the board / opponent totem row start
+    /// [0] top margin end / opponent totem row start
     /// [1] opponent totem row end / opponent unit row start
     /// [2] opponent unit row end / own unit row start (exact board mid-line)
     /// [3] own unit row end / own totem row start
-    /// [4] own totem row end / bottom edge of the board
-    /// No margin is reserved above [0] or below [4] in this pass -- the
-    /// board currently uses the full viewport height.
+    /// [4] own totem row end / bottom margin start
+    /// 60px (0.05 of the 1200-tall reference) is reserved above [0] and
+    /// below [4].
     /// </summary>
     public static readonly IReadOnlyList<float> RowFractions = new[]
     {
-        0.0f,
-        0.2f,
+        0.05f,
+        0.25f,
         0.5f,
-        0.8f,
-        1.0f,
+        0.75f,
+        0.95f,
     };
 
     /// <summary>

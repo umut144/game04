@@ -2,8 +2,9 @@
 
 Author: Umut (via Claude, game04 session), 2026-09-15
 Audience: PolyTools maintainer (i.e. the same developer, wearing the PolyTools hat)
-Status: request for scoping, not yet a commitment — the open questions at the
-end need an answer before this becomes a work item.
+Status: approved by the developer, 2026-09-15 — ready to act on. The open
+questions at the end still need an answer before implementation starts, but
+the request itself is final.
 
 ## Why
 
