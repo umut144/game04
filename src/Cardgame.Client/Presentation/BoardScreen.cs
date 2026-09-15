@@ -37,8 +37,6 @@ public partial class BoardScreen : Control
     private static readonly Color CardBorder = new(0.35f, 0.30f, 0.22f);
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
 
-    // The totem inside its 400-wide cell is 300 wide (BOARD_DESIGN.md).
-    private const float TotemInset = 50f / 400f;
 
     private readonly CardCatalog _catalog = DesignCatalogLoader.LoadFromSources(
         new Dictionary<string, string>(), new Dictionary<string, string>());
@@ -128,7 +126,7 @@ public partial class BoardScreen : Control
         string mode = _mirrorMode == MirrorMode.ShuffledMirror ? "Shuffled Mirror" : "Perfect Mirror";
         _info.Text =
             $"G01 board preview\n\nseed {_seed}\n{mode}\n\n" +
-            "R  new seed\nM  switch mirror mode\nclick a slot  place / remove\n        a blank card\n\n" +
+            "R: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
             "top row: opponent\nbottom row: you";
     }
 
@@ -163,7 +161,7 @@ public partial class BoardScreen : Control
             cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
             AddChild(cell);
 
-            // The card fills its 200x300 slot exactly (BOARD_DESIGN.md).
+            // The card fills its slot exactly (BOARD_DESIGN.md).
             var card = MakePanel(CardFill, CardBorder, 0f, 0f, 1f, 1f);
             card.Visible = false;
             var cardLabel = MakeLabel(string.Empty, 18, CardBorder);
@@ -184,7 +182,7 @@ public partial class BoardScreen : Control
             var cell = MakePanel(CellFill, CellBorder, columns[left], rows[band], columns[right], rows[band + 1]);
             AddChild(cell);
 
-            var totem = MakePanel(CellFill, CellBorder, TotemInset, 0f, 1f - TotemInset, 1f);
+            var totem = MakePanel(CellFill, CellBorder, BoardLayoutSpec.TotemSideInset, 0f, 1f - BoardLayoutSpec.TotemSideInset, 1f);
             var label = MakeLabel(string.Empty, 22, Colors.White);
             totem.AddChild(label);
             cell.AddChild(totem);
@@ -200,8 +198,10 @@ public partial class BoardScreen : Control
         _info = MakeLabel(string.Empty, 20, DimText);
         _info.HorizontalAlignment = HorizontalAlignment.Left;
         _info.VerticalAlignment = VerticalAlignment.Top;
+        _info.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         _info.OffsetLeft = 24;
-        _info.OffsetTop = 72;
+        _info.OffsetTop = 24;
+        _info.OffsetRight = -16;
         margin.AddChild(_info);
         AddChild(margin);
     }

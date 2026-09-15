@@ -1,11 +1,10 @@
 ; Engine configuration file.
-; It's best edited using the editor UI and not directly, since the parameters
-; that go here are meant to be edited by the editor.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
 ;
-; G01: BoardScreen shows the board grid (docs/BOARD_DESIGN.md) with the rolled
-; totem layout and blank cards, running the match locally as a dev bootstrap
-; until a server exists. The viewport is the 1920x1200 reference of
-; BOARD_DESIGN.md; the layout itself is anchored, not pixel-bound.
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -20,7 +19,6 @@ config/features=PackedStringArray("4.7", "C#")
 window/size/viewport_width=1920
 window/size/viewport_height=1200
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
 
 [dotnet]
 

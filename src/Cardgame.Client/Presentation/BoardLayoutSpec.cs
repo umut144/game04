@@ -3,43 +3,21 @@ using System.Collections.Generic;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// G01 board grid geometry, expressed as fractions of the design viewport
-/// rather than raw pixels, so the layout carries over unchanged at any
-/// resolution sharing the same 16:10 aspect: every consumer multiplies
-/// these fractions by the *current* viewport size instead of reading a
-/// baked-in pixel constant.
+/// G01 board grid geometry, expressed as fractions of the viewport rather
+/// than raw pixels, so the layout carries over unchanged at any resolution
+/// sharing the same 16:10 aspect. Derivation and numbers:
+/// <c>docs/BOARD_DESIGN.md</c> (settled as <c>LAYOUT-01</c>).
 ///
-/// The numbers below are the developer's own board-grid derivation
-/// (recorded in full in <c>docs/TASKS.md</c>'s <c>LAYOUT-01</c> entry),
-/// worked out against a 1920x1200 reference (chosen only because the
-/// arithmetic is easier at that size; it is exactly 3/4 of the 2560x1600
-/// design viewport used earlier in the G01 spec round, same 16:10 ratio,
-/// same resulting fractions). This is the settled version -- it resolves
-/// the card/totem-fit question the first pass left open.
+/// In short, at the 1920x1200 reference: the field fills the full height and
+/// is centred horizontally. Its proportions come from a 1200x1080 grid —
+/// columns 200 wide, totem rows 240 tall, unit rows 300 tall — scaled by
+/// 10/9 so that it touches the top and bottom edge: columns 222.2, totem
+/// rows 266.7, unit rows 333.3, field 1333.3x1200, side margins 293.3.
+/// A card fills its slot exactly (2:3); a totem is 3/4 of its cell's width
+/// (5:4), centred. Non-integer pixel sizes are expected; the anchors take
+/// care of them.
 ///
-/// The field is 1200 wide, centered horizontally in the 1920-wide
-/// viewport (360px margin each side). A unit column is 1200/6 = 200
-/// wide; a totem cell is 2 columns = 400 wide (a totem cell is always
-/// exactly 2 unit columns, forced by <c>concepts/board_field.JPG</c>'s
-/// grid lines running continuously top to bottom).
-///
-/// Row heights are chosen so each shape fits its own axis with zero
-/// distortion:
-/// - A unit/card row is exactly 300 tall, so a 200x300 cell holds the
-///   declared 60:90 (2:3) card ratio with zero padding and zero overlap
-///   -- 200:300 reduces to exactly 2:3.
-/// - A totem row is 240 tall, so the declared 160:128 (5:4) totem ratio
-///   comes out 300 wide inside the 400-wide cell, leaving a clean,
-///   deliberate 50px of centered margin either side.
-/// Two totem rows (240 each) and two unit rows (300 each) sum to 1080,
-/// 120px short of the 1200-tall viewport; rather than pad each unit row
-/// internally (the card fits its row exactly, no internal margin), that
-/// 120px is pushed to the *outside* of the field as a 60px top and 60px
-/// bottom margin, symmetric with the 360px side margins.
-///
-/// This is presentation-only geometry. It has no bearing on and is not
-/// read by anything in Cardgame.Core; BoardSide's slot/column-pair model
-/// is unaffected.
+/// Presentation-only: nothing in Cardgame.Core reads this.
 /// </summary>
 public static class BoardLayoutSpec
 {
@@ -52,46 +30,42 @@ public static class BoardLayoutSpec
 
     /// <summary>
     /// Vertical fractions (0..1) of the 5 row boundaries, top to bottom:
-    /// [0] top margin end / opponent totem row start
+    /// [0] top edge / opponent totem row start
     /// [1] opponent totem row end / opponent unit row start
-    /// [2] opponent unit row end / own unit row start (exact board mid-line)
+    /// [2] opponent unit row end / own unit row start (exact mid-line)
     /// [3] own unit row end / own totem row start
-    /// [4] own totem row end / bottom margin start
-    /// 60px (0.05 of the 1200-tall reference) is reserved above [0] and
-    /// below [4].
+    /// [4] own totem row end / bottom edge
+    /// Totem rows are 2/9 of the height, unit rows 5/18; no margin.
     /// </summary>
     public static readonly IReadOnlyList<float> RowFractions = new[]
     {
-        0.05f,
-        0.25f,
-        0.5f,
-        0.75f,
-        0.95f,
+        0f,
+        2f / 9f,
+        1f / 2f,
+        7f / 9f,
+        1f,
     };
 
     /// <summary>
-    /// Horizontal fractions (0..1) of the 7 column boundaries, left to
-    /// right, shared by every row: columns 0..5 are the 6 unit slots;
-    /// a totem cell spans boundaries (0,2), (2,4) or (4,6). 360px of
-    /// margin (0.1875 of the 1920-wide reference) is reserved on each
-    /// side for hand/HUD chrome.
+    /// Horizontal fractions (0..1) of the 7 column boundaries, left to right,
+    /// shared by every row: columns 0..5 are the 6 unit slots; a totem cell
+    /// spans boundaries (0,2), (2,4) or (4,6). Each column is 25/216 of the
+    /// width, the side margins 11/72 each.
     /// </summary>
     public static readonly IReadOnlyList<float> ColumnFractions = new[]
     {
-        0.1875000f,
-        0.2916667f,
-        0.3958333f,
-        0.5000000f,
-        0.6041667f,
-        0.7083333f,
-        0.8125000f,
+        33f / 216f,
+        58f / 216f,
+        83f / 216f,
+        108f / 216f,
+        133f / 216f,
+        158f / 216f,
+        183f / 216f,
     };
 
     /// <summary>
     /// Which pair of column-boundary indices (into <see cref="ColumnFractions"/>)
-    /// each of the 3 totem cells spans, left to right. Matches
-    /// <c>Cardgame.Core.Board.TotemColumnPair.StandardPairs</c> in spirit
-    /// (columns 1&amp;2, 3&amp;4, 5&amp;6 in 1-based unit-slot numbering).
+    /// each of the 3 totem cells spans, left to right — places A, B, C.
     /// </summary>
     public static readonly IReadOnlyList<(int Left, int Right)> TotemCellSpans = new[]
     {
@@ -99,4 +73,10 @@ public static class BoardLayoutSpec
         (2, 4),
         (4, 6),
     };
+
+    /// <summary>
+    /// The share of a totem cell's width left free on each side of the totem:
+    /// the totem is 3/4 of the cell's width (5:4 at the row's height).
+    /// </summary>
+    public const float TotemSideInset = 1f / 8f;
 }
