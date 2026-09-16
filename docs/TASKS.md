@@ -21,7 +21,7 @@ Read `AGENTS.md` first — its rules are what every row has to stay inside.
 
 **Where this stands.** The G00 spec round is settled (decisions `CORE-01`
 through `CORE-12` below, under **Settled**). `Cardgame.Core` and the rest of
-the solution shells now exist with G00's tests in place. In G01 the board geometry is settled (`LAYOUT-01`, `docs/BOARD_DESIGN.md`) and PolyTools's singles are synced into `src/Cardgame.Client/assets/polytools/` (`SYNC-02`); the totem layout, slot occupancy and the board screen with the synced PolyTools art are built (`G01-01` to `G01-06`). **G01 is done.** G02 (cards and the value language) is built (`G02-01` to `G02-07`) and waiting for the developer's look on the client; G03 (legibility) follows. Carried from G01: the client reads its art and design files from disk, which works in the editor but not yet in an exported build.
+the solution shells now exist with G00's tests in place. In G01 the board geometry is settled (`LAYOUT-01`, `docs/BOARD_DESIGN.md`) and PolyTools's singles are synced into `src/Cardgame.Client/assets/polytools/` (`SYNC-02`); the totem layout, slot occupancy and the board screen with the synced PolyTools art are built (`G01-01` to `G01-06`). **G01 is done.** **G02 is done** (`G02-01` to `G02-07`, checked on the client 2026-09-16). G03 (legibility) is next, starting with its spec round. Carried from G01: the client reads its art and design files from disk, which works in the editor but not yet in an exported build.
 
 ## Active Tasks
 
