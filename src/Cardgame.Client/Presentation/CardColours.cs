@@ -6,9 +6,8 @@ namespace Cardgame.Client.Presentation;
 
 /// <summary>
 /// The value language on the card (GAME_DESIGN.md §7.1, §7.2): each corner
-/// wedge has three bands — glyph03 at the corner is band 1, glyph02 band 2,
-/// glyph01 band 3 — and a value v shows (v−1) % 3 + 1 filled bands in
-/// intensity (v−1) / 3 of its colour family. 0 is an empty wedge. Colours are
+/// wedge has three glyphs, and <see cref="GlyphBands"/> says which of them a
+/// value fills; they take the value's intensity of its colour family. Colours are
 /// chosen here for G02 and move to design/ once they need tuning.
 /// </summary>
 public static class CardColours
@@ -25,7 +24,7 @@ public static class CardColours
             return part.Kind == AssetPartKind.Fill ? assets.FigureFill : assets.FigureStroke;
         }
 
-        if (part.Kind == AssetPartKind.Stroke || values is null || !TryParseGlyph(part.ComponentName, out string corner, out int band))
+        if (part.Kind == AssetPartKind.Stroke || values is null || !TryParseGlyph(part.ComponentName, out string corner, out int glyph))
         {
             return part.Kind == AssetPartKind.Fill ? assets.CardFill : assets.CardStroke;
         }
@@ -39,18 +38,18 @@ public static class CardColours
             _ => (0, Mana),
         };
 
-        if (value <= 0 || band > (value - 1) % 3 + 1)
+        if (!GlyphBands.IsFilled(System.Math.Clamp(value, 0, GlyphBands.MaximumValue), glyph))
         {
             return assets.CardFill;
         }
 
-        return family[System.Math.Min((value - 1) / 3, 2)];
+        return family[GlyphBands.IntensityOf(System.Math.Clamp(value, 1, GlyphBands.MaximumValue))];
     }
 
-    private static bool TryParseGlyph(string name, out string corner, out int band)
+    private static bool TryParseGlyph(string name, out string corner, out int glyph)
     {
         corner = string.Empty;
-        band = 0;
+        glyph = 0;
         int at = name.IndexOf("_glyph0", System.StringComparison.Ordinal);
         if (at <= 0 || at + 8 != name.Length || !int.TryParse(name.Substring(at + 7), out int number) || number is < 1 or > 3)
         {
@@ -58,7 +57,7 @@ public static class CardColours
         }
 
         corner = name[..at];
-        band = 4 - number;
+        glyph = number;
         return true;
     }
 }

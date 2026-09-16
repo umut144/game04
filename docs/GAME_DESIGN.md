@@ -225,13 +225,14 @@ Each corner is a triangular wedge divided into **3 bands**, read together with
 1 through 9. 9 is the maximum value in the game.
 
 ```text
-light  + 1..3 bands = 1, 2, 3
-medium + 1..3 bands = 4, 5, 6
-dark   + 1..3 bands = 7, 8, 9
+light  + 1..3 bands = 1, 2, 3    filled from band 1 towards band 3
+medium + 1..3 bands = 4, 5, 6    filled from band 3 towards band 1
+dark   + 1..3 bands = 7, 8, 9    filled from band 1 towards band 3
 ```
 
-The bands fill from the corner inwards: band 1 is the one in the very
-corner. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
+The fill direction alternates with the intensity, so a light 2 and a medium 5
+look different even where their colours are close. In the card asset band 1
+is `glyph01` and band 3 is `glyph03`. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
 so the player reads "empty" rather than "missing". Reference:
 `concepts/diegetic_examples/attack-power-example/`.
 
