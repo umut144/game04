@@ -16,7 +16,7 @@ public static class WorldStateDumper
     public static string Dump(WorldState world)
     {
         var text = new StringBuilder();
-        text.AppendLine($"seed={world.Seed} mirror={world.MirrorMode}");
+        text.AppendLine($"seed={world.Seed} mode={world.MatchMode} round={world.Turn.Round} active={world.Turn.ActivePlayer}");
         AppendPlayer(text, "PlayerA", world.PlayerA);
         AppendPlayer(text, "PlayerB", world.PlayerB);
         AppendBoard(text, "PlayerA board", world.Board.PlayerA.Totems, world.Board.PlayerA.UnitSlots);

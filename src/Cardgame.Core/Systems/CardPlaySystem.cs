@@ -15,6 +15,11 @@ public static class CardPlaySystem
 {
     public static IEvent Apply(WorldState world, CardCatalog catalog, PlayUnitCommand command)
     {
+        if (command.Player != world.Turn.ActivePlayer)
+        {
+            return Rejected(command, $"it is {world.Turn.ActivePlayer}'s turn");
+        }
+
         var zones = world.Zones(command.Player);
         var card = zones.Hand.Find(command.Card);
         if (card is null)

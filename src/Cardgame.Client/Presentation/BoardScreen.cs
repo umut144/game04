@@ -13,18 +13,21 @@ using Godot;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// The match screen (G01 board, G02 cards). It draws a <see cref="PlayerView"/>
-/// and sends commands; it decides nothing itself.
+/// The match screen (G01 board, G02 cards, G04 turns). It draws a
+/// <see cref="PlayerView"/> and sends commands; it decides nothing itself.
+/// Hot-seat: the screen always belongs to the active player.
 ///
 /// The own hand sits in the left margin as two banks of four cards, one shown
 /// at a time (Q). Playing a unit: click a hand card, click a free own slot,
 /// then pick the tier with 1, 2 or 3 (<see cref="TierPicker"/>). The mana
-/// totem's segments show the mana left.
+/// totem's segments show the mana left; the time totem drains through its
+/// segments, base time first, then — after a flip — bonus time. Clicking the
+/// own time totem or pressing Tab ends the turn.
 ///
-/// Dev bootstrap: there is no server yet, so this node holds the world and
-/// applies commands to it directly. Tab switches which player you are, F
-/// refills your mana, R starts a new match, M switches the mirror mode, D
-/// shows the debug number overlay (G02).
+/// Dev bootstrap: there is no server yet, so this node holds the world,
+/// keeps the turn clock (CORE-01 gives real time to the server later) and
+/// applies commands directly. P pauses the clock, F refills your mana, R
+/// starts a new match, M cycles the match mode, D shows the debug overlay.
 ///
 /// Both rows count 1-6 from the left and the totem places run A, B, C from
 /// the left on both sides: the view is mirrored, not turned (BoardGeometry).
@@ -52,8 +55,17 @@ public partial class BoardScreen : Control
     private WorldState _world = null!;
     private PlayerView _view = null!;
     private PlayerId _viewer = PlayerId.PlayerA;
+    private double _elapsed;
+    private bool _paused;
+    private bool _inBonus;
+    private readonly Dictionary<(int Row, TotemPosition Position), AssetView> _totemMasks = new();
+    private readonly Dictionary<(int Row, TotemPosition Position), Control> _totemCells = new();
+    private (int Row, TotemPosition Position)? _activeTimeTotem;
+    private float _segmentBottom;
+    private float _segmentTop;
     private ulong _seed = 1;
-    private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
+    private MatchMode _matchMode = MatchMode.ShuffledMirror;
+    private static readonly Shader DrainShader = GD.Load<Shader>("res://Presentation/DrainMask.gdshader");
     private int _bank;
     private bool _debug;
     private CardInstanceId? _selectedCard;
@@ -120,8 +132,17 @@ public partial class BoardScreen : Control
                 NewMatch();
                 break;
             case Key.M:
-                _mirrorMode = _mirrorMode == MirrorMode.ShuffledMirror ? MirrorMode.PerfectMirror : MirrorMode.ShuffledMirror;
+                _matchMode = _matchMode switch
+                {
+                    MatchMode.ShuffledMirror => MatchMode.PerfectMirror,
+                    MatchMode.PerfectMirror => MatchMode.Constructed,
+                    _ => MatchMode.ShuffledMirror,
+                };
                 NewMatch();
+                break;
+            case Key.P:
+                _paused = !_paused;
+                Refresh();
                 break;
             case Key.Q:
                 _bank = 1 - _bank;
@@ -135,9 +156,7 @@ public partial class BoardScreen : Control
                 Apply(CardPlaySystem.Apply(_world, new RefillManaCommand { Player = _viewer }));
                 break;
             case Key.Tab:
-                _viewer = PlayerIds.Opponent(_viewer);
-                ClearSelection();
-                Refresh();
+                EndTurn(timedOut: false);
                 break;
             case Key.Escape:
                 ClearSelection();
@@ -155,15 +174,92 @@ public partial class BoardScreen : Control
         var command = new SetupMatchCommand
         {
             Seed = _seed,
-            MirrorMode = _mirrorMode,
+            MatchMode = _matchMode,
             PlayerADeckDefinitionIds = _assets!.StarterDeck,
             PlayerBDeckDefinitionIds = _assets.StarterDeck,
         };
         _world = MatchSetupSystem.Apply(command, _assets.Catalog).World;
         _bank = 0;
+        StartClock();
         _lastMessage = string.Empty;
         ClearSelection();
         Refresh();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_assets is null || _world is null || _paused)
+        {
+            UpdateTimeTotem();
+            return;
+        }
+
+        _elapsed += delta;
+        var clock = _world.Clock;
+        if (!_inBonus && _elapsed >= clock.BaseSeconds)
+        {
+            _inBonus = true;
+            FlipActiveTimeTotem();
+            Refresh();
+        }
+
+        if (_elapsed >= clock.TotalSeconds)
+        {
+            EndTurn(timedOut: true);
+            return;
+        }
+
+        UpdateTimeTotem();
+    }
+
+    private void StartClock()
+    {
+        _elapsed = 0;
+        _inBonus = false;
+    }
+
+    private void EndTurn(bool timedOut)
+    {
+        var result = TurnSystem.Apply(_world, new EndTurnCommand { Player = _world.Turn.ActivePlayer, TimedOut = timedOut });
+        if (result is TurnStartedEvent)
+        {
+            ClearSelection();
+            _bank = 0;
+            StartClock();
+        }
+
+        Apply(result);
+    }
+
+    // The active time totem's lit segments end at the height of the time
+    // left in the current phase, draining from the top.
+    private void UpdateTimeTotem()
+    {
+        if (_activeTimeTotem is not { } key || _world is null)
+        {
+            return;
+        }
+
+        var clock = _world.Clock;
+        double left = _inBonus
+            ? 1 - (_elapsed - clock.BaseSeconds) / clock.BonusSeconds
+            : 1 - _elapsed / clock.BaseSeconds;
+        float cutoff = _segmentBottom + (float)System.Math.Clamp(left, 0, 1) * (_segmentTop - _segmentBottom);
+        ((ShaderMaterial)_totemMasks[key].Material).SetShaderParameter("cutoff", cutoff);
+    }
+
+    private void FlipActiveTimeTotem()
+    {
+        if (_activeTimeTotem is not { } key)
+        {
+            return;
+        }
+
+        var cell = _totemCells[key];
+        cell.PivotOffset = cell.Size / 2;
+        var tween = CreateTween();
+        tween.TweenProperty(cell, "scale", new Vector2(1f, 0f), 0.18f);
+        tween.TweenProperty(cell, "scale", Vector2.One, 0.18f);
     }
 
     private void ClearSelection()
@@ -185,6 +281,15 @@ public partial class BoardScreen : Control
         _selectedCard = _selectedCard == card ? null : card;
         _selectedSlot = null;
         Refresh();
+    }
+
+    private void OnTotemClicked(int row, TotemPosition position)
+    {
+        if (row == OwnRow && !_picker.Visible
+            && _view.OwnBoard.Totems.Any(t => t.Position == position && t.Type == TotemType.Time))
+        {
+            EndTurn(timedOut: false);
+        }
     }
 
     private void OnSlotClicked(int row, int slot)
@@ -234,7 +339,9 @@ public partial class BoardScreen : Control
 
     private void Refresh()
     {
+        _viewer = _world.Turn.ActivePlayer;
         _view = ProjectionSystem.Project(_world, _viewer);
+        _activeTimeTotem = null;
         if (_bank * BankSize >= System.Math.Max(_view.OwnHandCount, 1))
         {
             _bank = 0;
@@ -269,11 +376,13 @@ public partial class BoardScreen : Control
 
         _debugText.Visible = _debug;
         _debugText.Text =
-            $"{_viewer} · seed {_seed} · {_mirrorMode}\n" +
+            $"{_viewer} · round {_view.Round} · seed {_seed} · {_matchMode}\n" +
+            $"clock {(_inBonus ? "bonus" : "base")} {_elapsed:0.0}s of {_view.BaseSeconds}+{_view.BonusSeconds}{(_paused ? " · PAUSED" : string.Empty)}\n" +
             $"own: mana {_view.OwnMana}/{_view.OwnMaxMana}, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2\n" +
             $"opponent: mana {_view.OpponentMana}/{_view.OpponentMaxMana}, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}\n\n" +
             "click hand card → free slot → 1/2/3\n" +
-            "Q bank · Tab switch player · F refill mana\nR new match · M mirror · D overlay · Esc cancel\n\n" +
+            "Tab or click own time totem: end turn\n" +
+            "Q bank · P pause · F refill mana\nR new match · M mode · D overlay · Esc cancel\n\n" +
             _lastMessage;
     }
 
@@ -301,8 +410,9 @@ public partial class BoardScreen : Control
         {
             var (geometry, fill, stroke) = _assets!.Totem(placement.Type);
             var lit = stroke.Lightened(0.3f);
+            var key = (row, placement.Position);
             bool isMana = placement.Type == TotemType.Mana;
-            _totems[(row, placement.Position)].Display(geometry, part =>
+            _totems[key].Display(geometry, part =>
             {
                 if (part.Kind == AssetPartKind.Stroke)
                 {
@@ -311,6 +421,30 @@ public partial class BoardScreen : Control
 
                 return isMana && SegmentNumber(part.ComponentName) is int n && n <= mana ? lit : fill;
             });
+
+            var mask = _totemMasks[key];
+            if (placement.Type != TotemType.Time)
+            {
+                mask.Clear();
+                continue;
+            }
+
+            // The segments are the mask the remaining time shows through.
+            var segments = geometry.Where(part => part.Kind == AssetPartKind.Fill && SegmentNumber(part.ComponentName) is not null);
+            bool running = row == OwnRow;
+            var colour = running && _inBonus ? stroke.Darkened(0.12f) : lit;
+            mask.Display(segments, _ => colour);
+            if (running)
+            {
+                _activeTimeTotem = key;
+                _segmentBottom = segments.MinY;
+                _segmentTop = segments.MaxY;
+                UpdateTimeTotem();
+            }
+            else
+            {
+                ((ShaderMaterial)mask.Material).SetShaderParameter("cutoff", 1000f);
+            }
         }
     }
 
@@ -368,6 +502,26 @@ public partial class BoardScreen : Control
             CardControl.Fill(totem);
             cell.AddChild(totem);
             _totems[(row, position)] = totem;
+
+            var mask = new AssetView
+            {
+                PixelsPerMeter = BoardPixelsPerMeter,
+                Fill = _assets.CellFill,
+                Material = new ShaderMaterial { Shader = DrainShader },
+            };
+            CardControl.Fill(mask);
+            cell.AddChild(mask);
+            _totemMasks[(row, position)] = mask;
+            _totemCells[(row, position)] = cell;
+
+            cell.MouseFilter = MouseFilterEnum.Stop;
+            cell.GuiInput += @event =>
+            {
+                if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                {
+                    OnTotemClicked(row, position);
+                }
+            };
         }
     }
 

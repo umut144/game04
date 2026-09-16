@@ -17,15 +17,17 @@ public sealed class MatchSetupSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 12345,
-            MirrorMode = MirrorMode.PerfectMirror,
+            MatchMode = MatchMode.PerfectMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
 
         var (world, _) = MatchSetupSystem.Apply(command, catalog);
 
-        var playerAOrder = world.PlayerA.Deck.Cards.Select(card => card.DefinitionId).ToArray();
-        var playerBOrder = world.PlayerB.Deck.Cards.Select(card => card.DefinitionId).ToArray();
+        // Hand and deck together are the shuffled deck; the starting player
+        // simply drew one card more.
+        var playerAOrder = world.PlayerA.Hand.Cards.Concat(world.PlayerA.Deck.Cards).Select(card => card.DefinitionId).ToArray();
+        var playerBOrder = world.PlayerB.Hand.Cards.Concat(world.PlayerB.Deck.Cards).Select(card => card.DefinitionId).ToArray();
 
         Assert.Equal(playerAOrder, playerBOrder);
     }
@@ -38,15 +40,17 @@ public sealed class MatchSetupSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 999,
-            MirrorMode = MirrorMode.ShuffledMirror,
+            MatchMode = MatchMode.ShuffledMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
 
         var (world, _) = MatchSetupSystem.Apply(command, catalog);
 
-        var playerAOrder = world.PlayerA.Deck.Cards.Select(card => card.DefinitionId).ToArray();
-        var playerBOrder = world.PlayerB.Deck.Cards.Select(card => card.DefinitionId).ToArray();
+        // Hand and deck together are the shuffled deck; the starting player
+        // simply drew one card more.
+        var playerAOrder = world.PlayerA.Hand.Cards.Concat(world.PlayerA.Deck.Cards).Select(card => card.DefinitionId).ToArray();
+        var playerBOrder = world.PlayerB.Hand.Cards.Concat(world.PlayerB.Deck.Cards).Select(card => card.DefinitionId).ToArray();
 
         Assert.NotEqual(playerAOrder, playerBOrder);
     }
@@ -59,7 +63,7 @@ public sealed class MatchSetupSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 555,
-            MirrorMode = MirrorMode.ShuffledMirror,
+            MatchMode = MatchMode.ShuffledMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
@@ -75,30 +79,32 @@ public sealed class MatchSetupSystemTests
     }
 
     [Fact]
-    public void MatchSetupDealsFourCardsFromTheTopOfEachDeckAndFullMana()
+    public void BothSidesGetThreeCardsAndTheStartingPlayerDrawsAFourth()
     {
         var catalog = TestCardDesigns.BuildCatalog();
         var deck = TestCardDesigns.BuildDeck(10);
         var command = new SetupMatchCommand
         {
             Seed = 1,
-            MirrorMode = MirrorMode.PerfectMirror,
+            MatchMode = MatchMode.PerfectMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
 
-        var (world, _) = MatchSetupSystem.Apply(command, catalog);
+        var (world, setUp) = MatchSetupSystem.Apply(command, catalog);
 
-        // Instance ids follow build order, so the ids of hand and deck
-        // together are exactly the ten cards built, the hand first.
-        var dealtThenLeft = world.PlayerA.Hand.Cards.Concat(world.PlayerA.Deck.Cards).Select(card => card.Id.Value);
-        Assert.Equal(4, world.PlayerA.Hand.Cards.Count);
-        Assert.Equal(4, world.PlayerB.Hand.Cards.Count);
-        Assert.Equal(6, world.PlayerA.Deck.Cards.Count);
-        Assert.Equal(Enumerable.Range(0, 10).Select(i => (long)i), dealtThenLeft.OrderBy(id => id));
-        Assert.All(world.PlayerA.Hand.Cards, card => Assert.Null(card.Tier));
+        var starter = world.Zones(world.Turn.StartingPlayer);
+        var other = world.Zones(PlayerIds.Opponent(world.Turn.StartingPlayer));
+        Assert.Equal(world.Turn.StartingPlayer, world.Turn.ActivePlayer);
+        Assert.Equal(1, world.Turn.Round);
+        Assert.Equal(4, starter.Hand.Cards.Count);
+        Assert.Equal(6, starter.Deck.Cards.Count);
+        Assert.Equal(3, other.Hand.Cards.Count);
+        Assert.Equal(7, other.Deck.Cards.Count);
+        Assert.Equal(starter.Hand.Cards[3].Id, setUp.FirstTurn.Drawn);
+        Assert.All(starter.Hand.Cards, card => Assert.Null(card.Tier));
         Assert.Equal(7, world.PlayerA.Mana.Current);
-        Assert.Equal(7, world.PlayerB.Mana.Maximum);
+        Assert.Equal(7, world.PlayerB.Mana.Current);
     }
 
     [Fact]
@@ -107,7 +113,7 @@ public sealed class MatchSetupSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 3,
-            MirrorMode = MirrorMode.ShuffledMirror,
+            MatchMode = MatchMode.ShuffledMirror,
             PlayerADeckDefinitionIds = TestCardDesigns.BuildDeck(2),
             PlayerBDeckDefinitionIds = Array.Empty<string>(),
         };
@@ -126,7 +132,7 @@ public sealed class MatchSetupSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 1,
-            MirrorMode = MirrorMode.PerfectMirror,
+            MatchMode = MatchMode.PerfectMirror,
             PlayerADeckDefinitionIds = Array.Empty<string>(),
             PlayerBDeckDefinitionIds = Array.Empty<string>(),
         };

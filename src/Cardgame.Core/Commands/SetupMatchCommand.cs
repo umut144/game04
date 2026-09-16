@@ -10,7 +10,7 @@ using Cardgame.Core.Model;
 public sealed record SetupMatchCommand : ICommand
 {
     public required ulong Seed { get; init; }
-    public required MirrorMode MirrorMode { get; init; }
+    public required MatchMode MatchMode { get; init; }
     public required IReadOnlyList<string> PlayerADeckDefinitionIds { get; init; }
     public required IReadOnlyList<string> PlayerBDeckDefinitionIds { get; init; }
 }

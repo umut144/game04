@@ -1,7 +1,9 @@
 namespace Cardgame.Core;
 
 using Cardgame.Core.Board;
+using Cardgame.Core.Clock;
 using Cardgame.Core.Model;
+using Cardgame.Core.Turns;
 using Cardgame.Core.Zones;
 
 /// <summary>
@@ -12,10 +14,12 @@ using Cardgame.Core.Zones;
 public sealed class WorldState
 {
     public ulong Seed { get; }
-    public MirrorMode MirrorMode { get; }
+    public MatchMode MatchMode { get; }
     public BoardState Board { get; }
     public PlayerZones PlayerA { get; }
     public PlayerZones PlayerB { get; }
+    public TurnState Turn { get; } = new();
+    public TurnClock Clock { get; } = TurnClock.Standard;
 
     /// <summary>
     /// The one source of card instance ids for the whole match, so a card
@@ -23,10 +27,10 @@ public sealed class WorldState
     /// </summary>
     public CardInstanceIdGenerator CardIds { get; } = new();
 
-    public WorldState(ulong seed, MirrorMode mirrorMode)
+    public WorldState(ulong seed, MatchMode matchMode)
     {
         Seed = seed;
-        MirrorMode = mirrorMode;
+        MatchMode = matchMode;
         Board = new BoardState();
         PlayerA = new PlayerZones(PlayerId.PlayerA);
         PlayerB = new PlayerZones(PlayerId.PlayerB);

@@ -17,7 +17,7 @@ public sealed class WorldStateDumperTests
         var command = new SetupMatchCommand
         {
             Seed = 2026,
-            MirrorMode = MirrorMode.PerfectMirror,
+            MatchMode = MatchMode.PerfectMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
@@ -26,8 +26,11 @@ public sealed class WorldStateDumperTests
         string dump = WorldStateDumper.Dump(world);
 
         Assert.Contains("seed=2026", dump);
-        Assert.Contains("PlayerA: deck=4 hand=4 destroyed=0 mana=7/7", dump);
-        Assert.Contains("PlayerB: deck=4 hand=4 destroyed=0 mana=7/7", dump);
+        string starter = world.Turn.StartingPlayer.ToString();
+        string other = PlayerIds.Opponent(world.Turn.StartingPlayer).ToString();
+        Assert.Contains($"round=1 active={starter}", dump);
+        Assert.Contains($"{starter}: deck=4 hand=4 destroyed=0 mana=7/7", dump);
+        Assert.Contains($"{other}: deck=5 hand=3 destroyed=0 mana=7/7", dump);
         Assert.Contains("PlayerA board: totems=A:", dump);
         Assert.Contains("slots=[-,-,-,-,-,-]", dump);
     }

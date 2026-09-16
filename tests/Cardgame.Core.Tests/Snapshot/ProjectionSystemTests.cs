@@ -16,72 +16,87 @@ public sealed class ProjectionSystemTests
         var command = new SetupMatchCommand
         {
             Seed = 42,
-            MirrorMode = MirrorMode.ShuffledMirror,
+            MatchMode = MatchMode.ShuffledMirror,
             PlayerADeckDefinitionIds = deck,
             PlayerBDeckDefinitionIds = deck,
         };
         return MatchSetupSystem.Apply(command, TestCardDesigns.BuildCatalog()).World;
     }
 
-    private static UnitPlayedEvent PlayFirstCard(WorldState world, PlayerId player, int slot) =>
-        Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, TestCardDesigns.BuildCatalog(), new PlayUnitCommand
+    private static UnitPlayedEvent PlayFirstCard(WorldState world, int slot)
+    {
+        var player = world.Turn.ActivePlayer;
+        return Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, TestCardDesigns.BuildCatalog(), new PlayUnitCommand
         {
             Player = player,
             Card = world.Zones(player).Hand.Cards[0].Id,
             Tier = 1,
             Slot = slot,
         }));
+    }
 
     [Fact]
     public void APlayerSeesTheirOwnHandButOnlyCountsForTheOpponent()
     {
         var world = NewWorld();
+        var viewer = world.Turn.StartingPlayer;
+        var opponent = PlayerIds.Opponent(viewer);
 
-        var view = ProjectionSystem.Project(world, PlayerId.PlayerA);
+        var view = ProjectionSystem.Project(world, viewer);
 
+        Assert.True(view.IsOwnTurn);
+        Assert.Equal(1, view.Round);
+        Assert.Equal(20, view.BaseSeconds);
+        Assert.Equal(10, view.BonusSeconds);
         Assert.Equal(4, view.OwnHandCount);
-        Assert.Equal(world.PlayerA.Hand.Cards.Select(card => card.Id), view.OwnHandCards);
+        Assert.Equal(world.Zones(viewer).Hand.Cards.Select(card => card.Id), view.OwnHandCards);
         Assert.Equal(6, view.OwnDeckCount);
-        Assert.Equal(4, view.OpponentHandCount);
-        Assert.Equal(6, view.OpponentDeckCount);
+        Assert.Equal(3, view.OpponentHandCount);
+        Assert.Equal(7, view.OpponentDeckCount);
         Assert.All(view.OwnHandCards, id => Assert.True(view.Cards.ContainsKey(id)));
-        Assert.All(world.PlayerB.Hand.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
-        Assert.All(world.PlayerA.Deck.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
+        Assert.All(world.Zones(opponent).Hand.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
+        Assert.All(world.Zones(viewer).Deck.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
         Assert.Equal(7, view.OwnMana);
         Assert.Equal(7, view.OpponentMaxMana);
+        Assert.False(ProjectionSystem.Project(world, opponent).IsOwnTurn);
     }
 
     [Fact]
     public void TheBoardIsToldFromTheViewersSide()
     {
         var world = NewWorld();
-        var played = PlayFirstCard(world, PlayerId.PlayerB, 1);
+        var player = world.Turn.ActivePlayer;
+        var other = PlayerIds.Opponent(player);
+        var played = PlayFirstCard(world, 1);
 
-        var viewOfA = ProjectionSystem.Project(world, PlayerId.PlayerA);
-        var viewOfB = ProjectionSystem.Project(world, PlayerId.PlayerB);
+        var viewOfOther = ProjectionSystem.Project(world, other);
+        var viewOfPlayer = ProjectionSystem.Project(world, player);
 
-        Assert.Equal(played.Card, viewOfA.OpponentBoard.UnitSlots[0]);
-        Assert.Null(viewOfA.OwnBoard.UnitSlots[0]);
-        Assert.Equal(played.Card, viewOfB.OwnBoard.UnitSlots[0]);
-        Assert.Equal(1, viewOfA.Cards[played.Card].Tier);
-        Assert.Equal(world.Board.PlayerA.Totems, viewOfA.OwnBoard.Totems);
-        Assert.Equal(world.Board.PlayerB.Totems, viewOfA.OpponentBoard.Totems);
+        Assert.Equal(played.Card, viewOfOther.OpponentBoard.UnitSlots[0]);
+        Assert.Null(viewOfOther.OwnBoard.UnitSlots[0]);
+        Assert.Equal(played.Card, viewOfPlayer.OwnBoard.UnitSlots[0]);
+        Assert.Equal(1, viewOfOther.Cards[played.Card].Tier);
+        Assert.Equal(world.Board.Side(other).Totems, viewOfOther.OwnBoard.Totems);
+        Assert.Equal(world.Board.Side(player).Totems, viewOfOther.OpponentBoard.Totems);
     }
 
     [Fact]
     public void AViewIsACopyThatLaterChangesDoNotReach()
     {
         var world = NewWorld();
-        var view = ProjectionSystem.Project(world, PlayerId.PlayerA);
+        var player = world.Turn.ActivePlayer;
+        var view = ProjectionSystem.Project(world, player);
         var totemsBefore = view.OwnBoard.Totems.ToArray();
         var handBefore = view.OwnHandCards.ToArray();
 
-        PlayFirstCard(world, PlayerId.PlayerA, 3);
-        world.Board.PlayerA.SetTotemLayout(new[] { TotemType.Mana, TotemType.Time, TotemType.Life });
+        PlayFirstCard(world, 3);
+        world.Board.Side(player).SetTotemLayout(new[] { TotemType.Mana, TotemType.Time, TotemType.Life });
+        TurnSystem.Apply(world, new EndTurnCommand { Player = player });
 
         Assert.Null(view.OwnBoard.UnitSlots[2]);
         Assert.Equal(totemsBefore, view.OwnBoard.Totems);
         Assert.Equal(handBefore, view.OwnHandCards);
         Assert.Equal(7, view.OwnMana);
+        Assert.True(view.IsOwnTurn);
     }
 }

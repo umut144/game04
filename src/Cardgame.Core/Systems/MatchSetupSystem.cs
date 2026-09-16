@@ -10,27 +10,28 @@ using Cardgame.Core.Zones;
 
 /// <summary>
 /// Turns a <see cref="SetupMatchCommand"/> into a <see cref="WorldState"/>:
-/// both decks built and shuffled, both totem layouts rolled, and the
-/// starting hand dealt from the top of each deck (G02-02; CORE-10 is
-/// superseded).
+/// both decks built and shuffled, both totem layouts rolled, the starting
+/// hand of 3 dealt from the top of each deck, the starting player drawn from
+/// the seed, and their first turn begun — which draws their fourth card
+/// (G04-02, G04-03).
 /// </summary>
 public static class MatchSetupSystem
 {
-    public const int StartingHandSize = 4;
+    public const int StartingHandSize = 3;
 
     public static (WorldState World, MatchSetUpEvent Event) Apply(SetupMatchCommand command, CardCatalog catalog)
     {
-        var world = new WorldState(command.Seed, command.MirrorMode);
+        var world = new WorldState(command.Seed, command.MatchMode);
 
         BuildDeck(world.PlayerA.Deck, command.PlayerADeckDefinitionIds, catalog, world.CardIds);
         BuildDeck(world.PlayerB.Deck, command.PlayerBDeckDefinitionIds, catalog, world.CardIds);
 
-        ShuffleDeck(world.PlayerA.Deck, command.Seed, command.MirrorMode, PlayerId.PlayerA);
-        ShuffleDeck(world.PlayerB.Deck, command.Seed, command.MirrorMode, PlayerId.PlayerB);
+        ShuffleDeck(world.PlayerA.Deck, command.Seed, command.MatchMode, PlayerId.PlayerA);
+        ShuffleDeck(world.PlayerB.Deck, command.Seed, command.MatchMode, PlayerId.PlayerB);
 
         foreach (var player in new[] { PlayerId.PlayerA, PlayerId.PlayerB })
         {
-            world.Board.Side(player).SetTotemLayout(RollTotemLayout(command.Seed, command.MirrorMode, player));
+            world.Board.Side(player).SetTotemLayout(RollTotemLayout(command.Seed, command.MatchMode, player));
         }
 
         foreach (var player in new[] { PlayerId.PlayerA, PlayerId.PlayerB })
@@ -47,25 +48,45 @@ public static class MatchSetupSystem
             }
         }
 
-        var setUpEvent = new MatchSetUpEvent { Seed = command.Seed };
+        if (command.MatchMode.IsMirror())
+        {
+            world.PlayerA.Mana.Refill();
+            world.PlayerB.Mana.Refill();
+        }
+
+        var starter = RollStartingPlayer(command.Seed);
+        world.Turn.StartingPlayer = starter;
+        world.Turn.Round = 1;
+        var firstTurn = TurnSystem.BeginTurn(world, starter);
+
+        var setUpEvent = new MatchSetUpEvent { Seed = command.Seed, FirstTurn = firstTurn };
         return (world, setUpEvent);
     }
 
     /// <summary>
     /// The totems for places A, B, C of one side. Perfect Mirror: both sides
     /// use the same purpose label and so roll the same layout (§2). Shuffled
-    /// Mirror: each side rolls on its own, which may by chance come out the
+    /// Mirror and Constructed: each side rolls on its own, which may by chance come out the
     /// same (1 in 6) — independent means exactly that. Its own stream, so the
     /// decks never move the totems.
     /// </summary>
-    public static IReadOnlyList<TotemType> RollTotemLayout(ulong rootSeed, MirrorMode mirrorMode, PlayerId player)
+    public static IReadOnlyList<TotemType> RollTotemLayout(ulong rootSeed, MatchMode matchMode, PlayerId player)
     {
         var types = new List<TotemType>(Enum.GetValues<TotemType>());
         var rng = new Xoshiro256StarStar(
-            SeedDerivation.DeriveSubSeed(rootSeed, PurposeFor("totem-layout", mirrorMode, player)));
+            SeedDerivation.DeriveSubSeed(rootSeed, PurposeFor("totem-layout", matchMode, player)));
         DeterministicShuffle.ShuffleInPlace(types, rng);
         return types;
     }
+
+    /// <summary>
+    /// Who starts: drawn from the seed for now (G04-03). Speed decides once
+    /// Mastery Stats exist (§12, G09).
+    /// </summary>
+    public static PlayerId RollStartingPlayer(ulong rootSeed) =>
+        new Xoshiro256StarStar(SeedDerivation.DeriveSubSeed(rootSeed, "starting-player")).NextInt(2) == 0
+            ? PlayerId.PlayerA
+            : PlayerId.PlayerB;
 
     private static void BuildDeck(
         Zone deck,
@@ -84,15 +105,16 @@ public static class MatchSetupSystem
         }
     }
 
-    private static void ShuffleDeck(Zone deck, ulong rootSeed, MirrorMode mirrorMode, PlayerId player)
+    private static void ShuffleDeck(Zone deck, ulong rootSeed, MatchMode matchMode, PlayerId player)
     {
-        ulong subSeed = SeedDerivation.DeriveSubSeed(rootSeed, PurposeFor("deck-order", mirrorMode, player));
+        ulong subSeed = SeedDerivation.DeriveSubSeed(rootSeed, PurposeFor("deck-order", matchMode, player));
         deck.ShuffleInPlace(new Xoshiro256StarStar(subSeed));
     }
 
     // Perfect Mirror: one label for both sides, hence the identical sub-seed.
-    // Shuffled Mirror: one label per side, hence independent streams. Either
+    // Shuffled Mirror and Constructed: one label per side, hence independent
+    // streams. Either
     // way there is exactly one root seed for the whole match (CORE-03).
-    private static string PurposeFor(string purpose, MirrorMode mirrorMode, PlayerId player) =>
-        mirrorMode == MirrorMode.PerfectMirror ? purpose : $"{purpose}:{player}";
+    private static string PurposeFor(string purpose, MatchMode matchMode, PlayerId player) =>
+        matchMode == MatchMode.PerfectMirror ? purpose : $"{purpose}:{player}";
 }

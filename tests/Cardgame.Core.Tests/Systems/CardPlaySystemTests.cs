@@ -20,7 +20,7 @@ public sealed class CardPlaySystemTests
             new SetupMatchCommand
             {
                 Seed = 1,
-                MirrorMode = MirrorMode.ShuffledMirror,
+                MatchMode = MatchMode.ShuffledMirror,
                 PlayerADeckDefinitionIds = deck,
                 PlayerBDeckDefinitionIds = deck,
             },
@@ -29,11 +29,15 @@ public sealed class CardPlaySystemTests
 
     private static PlayUnitCommand Play(WorldState world, int handIndex, int tier, int slot) => new()
     {
-        Player = PlayerId.PlayerA,
-        Card = world.PlayerA.Hand.Cards[handIndex].Id,
+        Player = world.Turn.ActivePlayer,
+        Card = Active(world).Hand.Cards[handIndex].Id,
         Tier = tier,
         Slot = slot,
     };
+
+    private static Cardgame.Core.Zones.PlayerZones Active(WorldState world) => world.Zones(world.Turn.ActivePlayer);
+
+    private static Cardgame.Core.Board.BoardSide ActiveSide(WorldState world) => world.Board.Side(world.Turn.ActivePlayer);
 
     [Fact]
     public void PlayingAUnitMovesItFromHandToTheSlotAtItsTierAndPaysTheCost()
@@ -44,9 +48,9 @@ public sealed class CardPlaySystemTests
         var played = Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, command));
 
         Assert.Equal(4, played.ManaPaid);
-        Assert.Equal(3, world.PlayerA.Mana.Current);
-        Assert.Equal(3, world.PlayerA.Hand.Cards.Count);
-        Assert.Equal(command.Card, world.Board.PlayerA.OccupantOf(5));
+        Assert.Equal(3, Active(world).Mana.Current);
+        Assert.Equal(3, Active(world).Hand.Cards.Count);
+        Assert.Equal(command.Card, ActiveSide(world).OccupantOf(5));
         Assert.Equal(3, world.Board.Units[command.Card].Tier);
     }
 
@@ -63,7 +67,7 @@ public sealed class CardPlaySystemTests
         Assert.Contains("costs 2 mana, 1 available", Assert.IsType<CommandRejectedEvent>(result).Reason);
         Assert.Equal(before, WorldStateDumper.Dump(world));
         Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 1, 3)));
-        Assert.Equal(0, world.PlayerA.Mana.Current);
+        Assert.Equal(0, Active(world).Mana.Current);
     }
 
     [Fact]
@@ -72,7 +76,8 @@ public sealed class CardPlaySystemTests
         var world = NewWorld();
         CardPlaySystem.Apply(world, Catalog, Play(world, 0, 1, 2));
         string before = WorldStateDumper.Dump(world);
-        var opponentCard = world.PlayerB.Hand.Cards[0].Id;
+        var player = world.Turn.ActivePlayer;
+        var opponentCard = world.Zones(PlayerIds.Opponent(player)).Hand.Cards[0].Id;
 
         var commands = new[]
         {
@@ -81,8 +86,9 @@ public sealed class CardPlaySystemTests
             Play(world, 0, 4, 1),
             Play(world, 0, 1, 0),
             Play(world, 0, 1, 7),
-            new PlayUnitCommand { Player = PlayerId.PlayerA, Card = opponentCard, Tier = 1, Slot = 1 },
-            new PlayUnitCommand { Player = PlayerId.PlayerA, Card = new CardInstanceId(999), Tier = 1, Slot = 1 },
+            new PlayUnitCommand { Player = player, Card = opponentCard, Tier = 1, Slot = 1 },
+            new PlayUnitCommand { Player = player, Card = new CardInstanceId(999), Tier = 1, Slot = 1 },
+            new PlayUnitCommand { Player = PlayerIds.Opponent(player), Card = opponentCard, Tier = 1, Slot = 4 },
         };
 
         foreach (var command in commands)
@@ -100,9 +106,9 @@ public sealed class CardPlaySystemTests
         CardPlaySystem.Apply(world, Catalog, Play(world, 0, 3, 1));
 
         var refilled = Assert.IsType<ManaRefilledEvent>(
-            CardPlaySystem.Apply(world, new RefillManaCommand { Player = PlayerId.PlayerA }));
+            CardPlaySystem.Apply(world, new RefillManaCommand { Player = world.Turn.ActivePlayer }));
 
         Assert.Equal(7, refilled.Mana);
-        Assert.Equal(7, world.PlayerA.Mana.Current);
+        Assert.Equal(7, Active(world).Mana.Current);
     }
 }

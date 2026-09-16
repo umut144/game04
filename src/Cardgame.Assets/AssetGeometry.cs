@@ -143,6 +143,9 @@ public sealed class AssetGeometry
             Layer = layer,
         }).ToArray());
 
+    /// <summary>The parts <paramref name="keep"/> selects, with bounds of their own.</summary>
+    public AssetGeometry Where(Func<AssetPart, bool> keep) => new(AssetKey, Parts.Where(keep).ToArray());
+
     /// <summary>One geometry drawing <paramref name="layers"/> in order; its bounds are the first layer's.</summary>
     public static AssetGeometry Combine(params AssetGeometry[] layers) =>
         new(layers[0].AssetKey, layers.SelectMany(layer => layer.Parts).ToArray(), layers[0]);

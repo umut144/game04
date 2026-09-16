@@ -4,4 +4,5 @@ namespace Cardgame.Core.Events;
 public sealed record MatchSetUpEvent : IEvent
 {
     public required ulong Seed { get; init; }
+    public required TurnStartedEvent FirstTurn { get; init; }
 }

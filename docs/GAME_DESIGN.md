@@ -31,9 +31,9 @@ and from changes to the card's appearance.
 Diegetic is a rule for the *match*. Meta screens — lobby, server browser, deck
 composition, Mastery Stat allocation — may use text.
 
-## 2. Mirror modes
+## 2. Match modes
 
-Every match is a mirror match. Two modes:
+Three modes. Two of them are mirror matches:
 
 - **Shuffled Mirror** — same card pool, decks shuffled independently, different
   starting hands, and the **totem layout rolled independently per side**. This
@@ -51,6 +51,15 @@ intended. If both players took Stamina 3, both place, and the mirror is
 knowingly bent in that one respect. This is a deliberate exception, not an
 oversight — it is the price of the strongest defensive point in the game, and
 it is paid in the mode's own promise.
+
+The third mode, decided in G04, is not a mirror:
+
+- **Constructed** — each side brings its own deck, shuffled independently, with
+  the totem layout rolled independently per side as in Shuffled Mirror. It is
+  the one mode where **mana grows per round** (§6). Otherwise the modes follow
+  the same rules; there are no further exceptions between them. Choosing and
+  authoring decks belongs to the infrastructure gate; until then Constructed is
+  played with the starter deck on both sides.
 
 A deck is a subset of one large, growing card pool. Deck composition — choosing
 or authoring a deck — belongs to the infrastructure gate, not to the MVP.
@@ -166,8 +175,10 @@ question (§15).
 
 ### 5.3 Totem of Time
 
-The colour drains from top to bottom like an hourglass. A turn has **10 seconds
-of base time and 20 seconds of bonus time**. When the base time is spent, the
+The colour drains from top to bottom like an hourglass. The segments are the
+mask it shows through: the fill level moves continuously, so a segment can be
+partly filled. A turn has **20 seconds
+of base time and 10 seconds of bonus time**, fresh every turn. When the base time is spent, the
 totem flips and the bonus time runs down in a more intense colour.
 
 Only the **bonus time** can be attacked. Base time is a floor and cannot be
@@ -189,19 +200,26 @@ healthy attacker keeps their full budget. An unhealed resource totem compounds.
 
 - **Alternating turns**, each with its own clock. A **turn** is one player's
   turn; a **round** is both players having had one turn.
-- The turn clock is 10 s base + 20 s bonus (§5.3).
-- **Mana** grows by **1 per round**, up to maximum mana (7, or 8 with Mana
-  Mastery 3).
-- Unspent mana is normally lost at the end of the round. Mana Mastery carries 1
-  or 2 points over into the next round (§12).
-- **Draw** is 1 card per round.
-- **Starting hand is 4 cards**, dealt from the top of the shuffled deck at
+- The turn clock is 20 s base + 10 s bonus (§5.3). A turn ends when its time
+  runs out, or when the player ends it — by clicking their own Totem of Time.
+- **Mana** is set at the start of each of a player's turns:
+  - in the **mirror modes** to the maximum (7, or 8 with Mana Mastery 3) —
+    mana does not grow; a mirror match is at full budget from the first turn;
+  - in **Constructed** to the round number, up to the maximum — mana grows by
+    **1 per round**.
+  Unspent mana is lost when the turn ends. Mana Mastery carries 1 or 2 points
+  over into the next round (§12).
+- **Starting hand is 3 cards**, dealt from the top of the shuffled deck at
   match setup.
+- **Draw** is 1 card at the start of each of a player's turns, the very first
+  turn included: the starting player opens with 4 cards, and the other player
+  has 4 once their first turn begins.
 - **Hand limit is 8.** Hand size and hand limit are the same thing; this
   document uses "hand limit". A player with a full hand simply does not draw —
   no card is burned, nothing is lost, the deck is untouched.
 
-Who takes the first turn is decided by Speed (§12).
+Who takes the first turn is decided by Speed (§12). Until Mastery Stats exist it
+is drawn from the match seed.
 
 ## 7. Cards
 
@@ -830,7 +848,7 @@ Carried deliberately, to be answered at the gate that needs them
 (see `ROADMAP.md` §2). Referenced by name rather than by number, so that
 answering one does not renumber the rest.
 
-- **Stamina seconds.** Points 1 and 2 restated against 10 s + 20 s; the old
+- **Stamina seconds.** Points 1 and 2 restated against 20 s + 10 s; the old
   20 → 30 → 40 numbers predate the split.
 - **Barde.** Is the heal, cleanse and buff an attack replacement, an on-play
   effect, or a per-turn one? Which units count as adjacent?

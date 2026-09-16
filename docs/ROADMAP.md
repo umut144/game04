@@ -140,7 +140,8 @@ cheapest moment to discover it.
 
 - **Sim:** alternating turns with a per-turn clock, rounds, turn order from
   Speed, +1 mana per round to a maximum of 7, draw 1 per round, hand limit 8,
-  the 10 s base + 20 s bonus clock.
+  the 20 s base + 10 s bonus clock (changed from 10 + 20 in the G04 spec round;
+  mana grows per round only in the Constructed mode — `GAME_DESIGN.md` §2, §6).
 - **Pres:** the resource totems as the HUD — mana segments extinguishing as
   mana is spent, the Totem of Time draining and flipping into bonus time.
 

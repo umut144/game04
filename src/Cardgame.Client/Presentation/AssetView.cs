@@ -57,6 +57,7 @@ public partial class AssetView : Control
     {
         var vertices = new List<Vector2>();
         var colours = new List<Color>();
+        var uvs = new List<Vector2>();
         var indices = new List<int>();
         foreach (var part in geometry.Parts)
         {
@@ -66,6 +67,7 @@ public partial class AssetView : Control
             {
                 vertices.Add(new Vector2(part.Vertices[i], part.Vertices[i + 1]));
                 colours.Add(colour);
+                uvs.Add(new Vector2(part.Vertices[i], part.Vertices[i + 1]));
             }
 
             foreach (int index in part.Indices)
@@ -78,6 +80,8 @@ public partial class AssetView : Control
         arrays.Resize((int)Mesh.ArrayType.Max);
         arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
         arrays[(int)Mesh.ArrayType.Color] = colours.ToArray();
+        // The asset's own meters, for shaders that mask by position.
+        arrays[(int)Mesh.ArrayType.TexUV] = uvs.ToArray();
         arrays[(int)Mesh.ArrayType.Index] = indices.ToArray();
 
         var mesh = new ArrayMesh();

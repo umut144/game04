@@ -20,6 +20,11 @@ public sealed record PlayerView
     public required int OpponentDeckCount { get; init; }
     public required IReadOnlyList<CardInstanceId> OwnDestroyed { get; init; }
     public required IReadOnlyList<CardInstanceId> OpponentDestroyed { get; init; }
+    public required PlayerId ActivePlayer { get; init; }
+    public required int Round { get; init; }
+    public required int BaseSeconds { get; init; }
+    public required int BonusSeconds { get; init; }
+    public bool IsOwnTurn => ActivePlayer == Viewer;
     public required int OwnMana { get; init; }
     public required int OwnMaxMana { get; init; }
     public required int OpponentMana { get; init; }
