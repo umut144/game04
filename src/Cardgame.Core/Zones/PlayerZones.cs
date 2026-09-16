@@ -2,7 +2,7 @@ namespace Cardgame.Core.Zones;
 
 using Cardgame.Core.Model;
 
-/// <summary>The three zones one player owns (§8.3). Board occupancy
+/// <summary>The three zones one player owns (§8.3), and their mana (§6). Board occupancy
 /// is tracked on <see cref="Board.BoardState"/> instead, since it is shared
 /// board geometry rather than a player-private list.</summary>
 public sealed class PlayerZones
@@ -11,6 +11,9 @@ public sealed class PlayerZones
     public Zone Deck { get; }
     public Zone Hand { get; }
     public Zone Destroyed { get; }
+    public ManaPool Mana { get; } = new();
+
+    public const int HandLimit = 8;
 
     public PlayerZones(PlayerId owner)
     {

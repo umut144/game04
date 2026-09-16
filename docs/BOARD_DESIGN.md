@@ -80,6 +80,14 @@ Colours, from the same file: cards have crystal-blue strokes, totems strokes in
 their own colour — Life bordeaux, Mana sky blue, Time emerald — and everything
 is filled paper white.
 
+## Hand and deck
+
+The own hand fills the left margin as a bank of four cells, each 240×300 at
+the reference (a quarter of the height); a second bank of four is switched in
+with Q. A hand card fits its cell's height, so it is drawn 300 tall and 210
+wide before `cell_fill`, smaller than a board card. The own deck is one card
+back in the right margin, level with the own card row.
+
 ## Breathing room
 
 Cards and totems are drawn at **96 %** of the size above, centred in their

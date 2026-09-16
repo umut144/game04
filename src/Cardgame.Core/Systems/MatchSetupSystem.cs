@@ -10,11 +10,14 @@ using Cardgame.Core.Zones;
 
 /// <summary>
 /// Turns a <see cref="SetupMatchCommand"/> into a <see cref="WorldState"/>:
-/// both decks built and shuffled, both totem layouts rolled. The starting
-/// hand is G04's (docs/TASKS.md, CORE-10).
+/// both decks built and shuffled, both totem layouts rolled, and the
+/// starting hand dealt from the top of each deck (G02-02; CORE-10 is
+/// superseded).
 /// </summary>
 public static class MatchSetupSystem
 {
+    public const int StartingHandSize = 4;
+
     public static (WorldState World, MatchSetUpEvent Event) Apply(SetupMatchCommand command, CardCatalog catalog)
     {
         var world = new WorldState(command.Seed, command.MirrorMode);
@@ -28,6 +31,20 @@ public static class MatchSetupSystem
         foreach (var player in new[] { PlayerId.PlayerA, PlayerId.PlayerB })
         {
             world.Board.Side(player).SetTotemLayout(RollTotemLayout(command.Seed, command.MirrorMode, player));
+        }
+
+        foreach (var player in new[] { PlayerId.PlayerA, PlayerId.PlayerB })
+        {
+            var zones = world.Zones(player);
+            for (int i = 0; i < StartingHandSize && zones.Hand.Cards.Count < PlayerZones.HandLimit; i++)
+            {
+                if (zones.Deck.TakeTop() is not { } card)
+                {
+                    break;
+                }
+
+                zones.Hand.Add(card);
+            }
         }
 
         var setUpEvent = new MatchSetUpEvent { Seed = command.Seed };

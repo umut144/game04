@@ -11,6 +11,7 @@ public sealed record CardDefinition
 {
     public required string Id { get; init; }
     public CardType? Type { get; init; }
+    public string? AssetKey { get; init; }
     public required IReadOnlyList<string> AbilityNameKeys { get; init; }
     public required IReadOnlyList<CardTier> Tiers { get; init; }
 }

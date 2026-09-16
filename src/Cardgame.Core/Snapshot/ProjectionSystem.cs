@@ -22,8 +22,15 @@ public static class ProjectionSystem
             OpponentDeckCount = other.Deck.Cards.Count,
             OwnDestroyed = own.Destroyed.Cards.Select(card => card.Id).ToArray(),
             OpponentDestroyed = other.Destroyed.Cards.Select(card => card.Id).ToArray(),
+            OwnMana = own.Mana.Current,
+            OwnMaxMana = own.Mana.Maximum,
+            OpponentMana = other.Mana.Current,
+            OpponentMaxMana = other.Mana.Maximum,
             OwnBoard = BoardSideView.CopyOf(world.Board.Side(viewer)),
             OpponentBoard = BoardSideView.CopyOf(world.Board.Side(opponent)),
+            Cards = own.Hand.Cards
+                .Concat(world.Board.Units.Values)
+                .ToDictionary(card => card.Id, card => new CardView(card.Id, card.DefinitionId, card.Tier)),
         };
     }
 }

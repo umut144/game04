@@ -13,10 +13,13 @@ understood.
 Layout, once populated:
 
 - `cards/<id>.json` — one file per card. Every card names three tiers
-  (GAME_DESIGN.md §7.3) and, optionally, the ability name keys it plays.
+  (GAME_DESIGN.md §7.3), the ability name keys it plays, and `asset_key`, the
+  PolyTools character drawn on it.
 - `abilities/<name-key>.json` — one file per ability. A card's
   `ability_name_keys` must each resolve to a file here; the loader rejects a
   card that references one that does not exist.
+- `decks/<id>.json` — a deck as card ids with counts; `starter.json` is the
+  20-card mirror deck both sides play until deck composition exists (G10).
 - `asset_keys.json` — the PolyTools asset keys game04 uses that no card
   names itself: the card frame (`card`) and the three totems. It is a
   reference, not a copy — the vector data lives in
@@ -32,8 +35,5 @@ Layout, once populated:
   card or totem fills, drawn centred. Read by `Cardgame.Assets`
   (`BOARD_DESIGN.md`).
 
-G00 ships this pipeline empty on purpose. `cards/` and `abilities/` do not
-exist yet: Rogue and Wizard are the first real content, and they are G02
-scope (ROADMAP.md), not G00's. `Cardgame.TestSupport.TestCardDesigns` holds
-fixture cards for G00's own tests instead, clearly named so nobody mistakes
-them for balance data.
+The cards and abilities are G02's first set: rough values to get moving, no
+balance claim (`docs/TASKS.md`, `G02-01`).

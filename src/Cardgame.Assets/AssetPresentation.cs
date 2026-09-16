@@ -16,7 +16,12 @@ public sealed record AssetPresentation(double ScaleX, double ScaleY, string Fill
 /// <see cref="CellFill"/>, how much of its board cell a card or totem fills
 /// (drawn centred, so the rest is shared evenly around it).
 /// </summary>
-public sealed record AssetPresentationFile(double CellFill, IReadOnlyDictionary<string, AssetPresentation> Assets);
+/// <param name="FigureFill">Fill of every character drawn on a card; its size comes from <see cref="CardFigureFit"/>.</param>
+public sealed record AssetPresentationFile(
+    double CellFill,
+    IReadOnlyDictionary<string, AssetPresentation> Assets,
+    string FigureFill,
+    string FigureStroke);
 
 public static class AssetPresentationLoader
 {
@@ -82,7 +87,19 @@ public static class AssetPresentationLoader
                 result[entry.Name] = new AssetPresentation(x, y, fill, stroke);
             }
 
-            return new AssetPresentationFile(cellFill, result);
+            if (!root.TryGetProperty("figure", out var figure) || figure.ValueKind != JsonValueKind.Object)
+            {
+                Fail("figure must be an object with fill and stroke");
+            }
+
+            string figureFill = Colour(figure, "fill");
+            string figureStroke = Colour(figure, "stroke");
+            if (figureFill.Length == 0 || figureStroke.Length == 0)
+            {
+                Fail("figure: fill and stroke must be #RRGGBB colours");
+            }
+
+            return new AssetPresentationFile(cellFill, result, figureFill, figureStroke);
         }
     }
 

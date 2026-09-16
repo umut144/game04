@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "name_key": "burn",
+  "note": "Applies one Burn per attack."
+}

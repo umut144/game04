@@ -20,6 +20,16 @@ public sealed record PlayerView
     public required int OpponentDeckCount { get; init; }
     public required IReadOnlyList<CardInstanceId> OwnDestroyed { get; init; }
     public required IReadOnlyList<CardInstanceId> OpponentDestroyed { get; init; }
+    public required int OwnMana { get; init; }
+    public required int OwnMaxMana { get; init; }
+    public required int OpponentMana { get; init; }
+    public required int OpponentMaxMana { get; init; }
     public required BoardSideView OwnBoard { get; init; }
     public required BoardSideView OpponentBoard { get; init; }
+
+    /// <summary>
+    /// Every card the viewer may identify: their own hand and both boards.
+    /// Opponent hand and all decks are absent by construction.
+    /// </summary>
+    public required IReadOnlyDictionary<CardInstanceId, CardView> Cards { get; init; }
 }

@@ -17,6 +17,77 @@ public sealed class RepositoryAssetsTests
             File.ReadAllText(Path.Combine(Root, "design", "asset_presentation.json")),
             "design/asset_presentation.json").Assets;
 
+    private static readonly string[] CardFigureKeys = Directory
+        .EnumerateFiles(Path.Combine(Root, "design", "cards"), "*.json")
+        .Select(path => JsonDocument.Parse(File.ReadAllText(path)).RootElement.GetProperty("asset_key").GetString()!)
+        .Distinct()
+        .ToArray();
+
+    public static TheoryData<string> Figures()
+    {
+        var data = new TheoryData<string>();
+        foreach (string key in CardFigureKeys)
+        {
+            data.Add(key);
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(Figures))]
+    public void EveryCardFigureFitsCentredInsideTheCardAndClearOfItsCornerWedges(string key)
+    {
+        var card = Library.Build("card", Presentation["card"]);
+        var window = CardFigureFit.WindowOf(card);
+
+        var figure = CardFigureFit.Fit(card, Library.Build(key, 1, 1), "figure");
+
+        const float tolerance = 1e-4f;
+        Assert.Equal(window.CenterX, figure.CenterX, 3);
+        Assert.Equal(window.CenterY, figure.CenterY, 3);
+        Assert.True(figure.Width <= card.Width + tolerance && figure.Height <= card.Height + tolerance, $"{key} leaves the card");
+        bool clearBetweenSides = figure.Width / 2 <= window.InnerHalfWidth + tolerance;
+        bool clearBetweenTopAndBottom = figure.Height / 2 <= window.InnerHalfHeight + tolerance;
+        Assert.True(clearBetweenSides || clearBetweenTopAndBottom, $"{key} overlaps a corner wedge");
+        bool touchesALimit = Math.Abs(figure.Width / 2 - window.InnerHalfWidth) < 1e-3
+            || Math.Abs(figure.Height / 2 - window.HalfHeight) < 1e-3
+            || Math.Abs(figure.Width / 2 - window.HalfWidth) < 1e-3
+            || Math.Abs(figure.Height / 2 - window.InnerHalfHeight) < 1e-3;
+        Assert.True(touchesALimit, $"{key} is not as large as it could be");
+    }
+
+    [Fact]
+    public void TheCardWindowLiesBetweenTheCornerWedges()
+    {
+        var card = Library.Build("card", Presentation["card"]);
+
+        var window = CardFigureFit.WindowOf(card);
+
+        // PolyTools: glyph01 wedges end 0.15 m in from the 0.3 m half-width
+        // and 0.15 m in from the 0.45 m half-height; scaled by 1.12 and 16/15.
+        Assert.Equal(0.168f, window.InnerHalfWidth, 3);
+        Assert.Equal(0.32f, window.InnerHalfHeight, 3);
+        Assert.Equal(0.336f, window.HalfWidth, 3);
+        Assert.Equal(0.48f, window.HalfHeight, 3);
+    }
+
+    [Fact]
+    public void TheBardeDrawsItsReferencedOrbAndEyes()
+    {
+        var barde = Library.Build("barde", 1, 1);
+
+        Assert.Contains(barde.Parts, part => part.Source == "orb");
+        var eyes = barde.Parts
+            .Where(part => part.Source == "plus" && part.ComponentName == "main_vertical")
+            .Select(part => MathF.Round(part.Vertices.Where((_, i) => i % 2 == 0).Average(), 3))
+            .Distinct()
+            .ToArray();
+        Assert.Equal(2, eyes.Length);
+        Assert.True(eyes.Min() < 0 && eyes.Max() > 0, $"eyes at {string.Join(", ", eyes)}");
+        Assert.Contains(barde.Parts, part => part.Source == "barde");
+    }
+
     [Fact]
     public void EveryKeyGame04UsesHasAPresentationAndASyncedManifest()
     {
@@ -73,8 +144,7 @@ public sealed class RepositoryAssetsTests
     {
         // The contract's cross-check that vertices are pivot-relative: placing
         // local (0, 0) must give the exported component_pivot, for every
-        // synced single game04 can read (asset references it does not draw
-        // yet, so those manifests are left out).
+        // synced single.
         var root = Path.Combine(Root, "src", "Cardgame.Client", "assets", "polytools");
         var manifests = Directory.EnumerateFiles(root, "manifest.json", SearchOption.AllDirectories).ToArray();
         Assert.NotEmpty(manifests);
@@ -83,11 +153,6 @@ public sealed class RepositoryAssetsTests
         foreach (string path in manifests)
         {
             string json = File.ReadAllText(path);
-            if (json.Contains("\"asset_reference\"", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
             var manifest = PolyToolsManifest.Parse(json, path);
             checkedCount++;
             foreach (var component in manifest.Components)
@@ -101,7 +166,7 @@ public sealed class RepositoryAssetsTests
             }
         }
 
-        Assert.True(checkedCount > manifests.Length / 2, $"only {checkedCount} of {manifests.Length} manifests checked");
+        Assert.Equal(manifests.Length, checkedCount);
     }
 
     private static string FindRepositoryRoot()

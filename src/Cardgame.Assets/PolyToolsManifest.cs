@@ -69,9 +69,14 @@ public sealed record PolyToolsManifest
         foreach (var component in Components)
         {
             string where = $"component {component.Name}";
-            if (component.Kind is not null)
+            if (component.Kind is not null and not ManifestComponent.AssetReferenceKind)
             {
-                Fail($"{where} is a {component.Kind}, which game04 does not draw yet");
+                Fail($"{where} is a {component.Kind}, which game04 does not draw");
+            }
+
+            if (component.IsReference && string.IsNullOrWhiteSpace(component.SourceAssetKey))
+            {
+                Fail($"{where} is an asset reference without source_asset_key");
             }
 
             if (component.ParentComponentId is { } parent && !ids.Contains(parent))
@@ -116,6 +121,12 @@ public sealed record ManifestComponent
     public required string Name { get; init; }
     public string? Kind { get; init; }
     public string? ParentComponentId { get; init; }
+    public string? SourceAssetKey { get; init; }
+
+    public const string AssetReferenceKind = "asset_reference";
+
+    /// <summary>An instance of another asset, placed by this component's transform.</summary>
+    public bool IsReference => Kind == AssetReferenceKind;
     public int ZIndex { get; init; }
 
     /// <summary>

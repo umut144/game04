@@ -15,6 +15,7 @@ public static class DesignCatalogLoader
     private const int SupportedCardSchemaVersion = 1;
     private const int SupportedAbilitySchemaVersion = 1;
     private const int RequiredTierCount = 3;
+    public const int MaximumCornerValue = 9;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -148,6 +149,11 @@ public static class DesignCatalogLoader
                 continue;
             }
 
+            if (design.AssetKey is { } assetKey && string.IsNullOrWhiteSpace(assetKey))
+            {
+                errors.Add($"{sourceName}: card '{design.Id}' has an empty asset_key");
+            }
+
             if (design.Tiers.Count != RequiredTierCount)
             {
                 errors.Add(
@@ -156,9 +162,10 @@ public static class DesignCatalogLoader
 
             foreach (var tier in design.Tiers)
             {
-                if (tier.Cost < 0 || tier.Bounty < 0 || tier.Attack < 0 || tier.Health < 0)
+                if (new[] { tier.Cost, tier.Bounty, tier.Attack, tier.Health }
+                    .Any(value => value < 0 || value > MaximumCornerValue))
                 {
-                    errors.Add($"{sourceName}: card '{design.Id}' has a negative corner value");
+                    errors.Add($"{sourceName}: card '{design.Id}' has a corner value outside 0-{MaximumCornerValue}");
                     break;
                 }
             }
@@ -181,6 +188,7 @@ public static class DesignCatalogLoader
             {
                 Id = design.Id,
                 Type = design.Type,
+                AssetKey = design.AssetKey,
                 AbilityNameKeys = design.AbilityNameKeys,
                 Tiers = design.Tiers
                     .Select(tier => new CardTier

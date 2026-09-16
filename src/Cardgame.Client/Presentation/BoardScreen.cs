@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
+using Cardgame.Assets;
 using Cardgame.Core;
 using Cardgame.Core.Board;
 using Cardgame.Core.Commands;
-using Cardgame.Core.Design;
+using Cardgame.Core.Events;
 using Cardgame.Core.Model;
 using Cardgame.Core.Snapshot;
 using Cardgame.Core.Systems;
@@ -11,112 +13,141 @@ using Godot;
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// G01's board: the grid of <see cref="BoardLayoutSpec"/>, the rolled totems
-/// and blank cards drawn with the synced PolyTools art (<see cref="BoardAssets"/>),
-/// cards placed and removed by clicking a slot. It draws a <see cref="PlayerView"/> and sends commands;
-/// it decides nothing itself.
+/// The match screen (G01 board, G02 cards). It draws a <see cref="PlayerView"/>
+/// and sends commands; it decides nothing itself.
+///
+/// The own hand sits in the left margin as two banks of four cards, one shown
+/// at a time (Q). Playing a unit: click a hand card, click a free own slot,
+/// then pick the tier with 1, 2 or 3 (<see cref="TierPicker"/>). The mana
+/// totem's segments show the mana left.
 ///
 /// Dev bootstrap: there is no server yet, so this node holds the world and
-/// applies commands to it directly, always showing PlayerA's view (own side
-/// at the bottom). Clicking the opponent's row places for PlayerB, so both
-/// sides can be tried from one screen. R rolls a new seed, M switches the
-/// mirror mode.
+/// applies commands to it directly. Tab switches which player you are, F
+/// refills your mana, R starts a new match, M switches the mirror mode, D
+/// shows the debug number overlay (G02).
 ///
 /// Both rows count 1-6 from the left and the totem places run A, B, C from
-/// the left on both sides: the view is mirrored, not turned, so slot n faces
-/// slot n (BoardGeometry).
+/// the left on both sides: the view is mirrored, not turned (BoardGeometry).
 /// </summary>
 public partial class BoardScreen : Control
 {
+    private const int BankSize = 4;
+    private const int OwnRow = 0;
+    private const int OpponentRow = 1;
+
     private static readonly Color Background = new(0.055f, 0.09f, 0.07f);
     private static readonly Color CellFill = new(0.10f, 0.14f, 0.12f);
     private static readonly Color CellBorder = new(0.30f, 0.36f, 0.33f);
     private static readonly Color OwnSlotFill = new(0.13f, 0.19f, 0.25f);
     private static readonly Color OpponentSlotFill = new(0.22f, 0.14f, 0.17f);
-    private static readonly Color MarginFill = new(0.08f, 0.11f, 0.10f);
+    private static readonly Color SelectedSlotBorder = new("E3B341");
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
 
-    private readonly CardCatalog _catalog = DesignCatalogLoader.LoadFromSources(
-        new Dictionary<string, string>(), new Dictionary<string, string>());
+    private readonly Dictionary<(int Row, int Slot), CardControl> _slotCards = new();
+    private readonly Dictionary<(int Row, int Slot), Panel> _slotCells = new();
+    private readonly Dictionary<(int Row, TotemPosition Position), AssetView> _totems = new();
+    private readonly CardControl[] _handCards = new CardControl[BankSize];
 
-    private readonly Dictionary<(PlayerId Player, int Slot), AssetView> _cards = new();
-    private readonly Dictionary<(PlayerId Player, TotemPosition Position), AssetView> _totems = new();
-
-    private const PlayerId Viewer = PlayerId.PlayerA;
-
+    private BoardAssets? _assets;
     private WorldState _world = null!;
+    private PlayerView _view = null!;
+    private PlayerId _viewer = PlayerId.PlayerA;
     private ulong _seed = 1;
     private MirrorMode _mirrorMode = MirrorMode.ShuffledMirror;
-    private Label _info = null!;
+    private int _bank;
+    private bool _debug;
+    private CardInstanceId? _selectedCard;
+    private int? _selectedSlot;
+    private string _lastMessage = string.Empty;
+
     private Control _root = null!;
-    private BoardAssets? _assets;
-    private string _assetError = string.Empty;
+    private CardControl _deck = null!;
+    private Label _debugText = null!;
+    private Label _error = null!;
+    private TierPicker _picker = null!;
 
     public override void _Ready()
     {
-        AddChild(MakeRect(Background, 0f, 0f, 1f, 1f));
+        _root = MakeRect(Background, 0f, 0f, 1f, 1f);
+        AddChild(_root);
+
+        _error = MakeLabel(string.Empty, 20, new Color("EF8354"));
+        _error.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _root.AddChild(_error);
+
         try
         {
             _assets = BoardAssets.Load();
         }
         catch (System.Exception exception)
         {
-            _assetError = exception.Message;
-            GD.PushError($"board art not loaded: {exception.Message}");
+            _error.Text = $"Board data not loaded:\n{exception.Message}";
+            GD.PushError($"board data not loaded: {exception.Message}");
+            return;
         }
 
-        BuildBoard();
+        BuildTotemRow(OpponentRow, 0);
+        BuildSlotRow(OpponentRow, 1, OpponentSlotFill);
+        BuildSlotRow(OwnRow, 2, OwnSlotFill);
+        BuildTotemRow(OwnRow, 3);
+        BuildHand();
+        BuildDeck();
+        BuildDebugText();
+
+        _picker = new TierPicker();
+        _picker.TierChosen += PlaySelected;
+        _picker.Cancelled += () =>
+        {
+            _selectedSlot = null;
+            Refresh();
+        };
+        AddChild(_picker);
+
         NewMatch();
-    }
-
-    private void BuildBoard()
-    {
-        _root = MakeRect(Background, 0f, 0f, 1f, 1f);
-        AddChild(_root);
-        BuildTotemRow(PlayerIds.Opponent(Viewer), 0);
-        BuildSlotRow(PlayerIds.Opponent(Viewer), 1, OpponentSlotFill);
-        BuildSlotRow(Viewer, 2, OwnSlotFill);
-        BuildTotemRow(Viewer, 3);
-        BuildInfo();
-        BuildMarginCards();
-    }
-
-    // Where the hand (left) and the deck (right) will go: each side margin is
-    // exactly one card wide (BOARD_DESIGN.md), level with the own card row.
-    private void BuildMarginCards()
-    {
-        var rows = BoardLayoutSpec.RowFractions;
-        var columns = BoardLayoutSpec.ColumnFractions;
-        var hand = MakePanel(MarginFill, CellBorder, 0f, rows[2], columns[0], rows[3]);
-        hand.AddChild(MakeCardView(BoardAssets.CardKey));
-        hand.AddChild(MakeLabel("Hand", 22, CellBorder));
-        _root.AddChild(hand);
-
-        var deck = MakePanel(MarginFill, CellBorder, columns[^1], rows[2], 1f, rows[3]);
-        deck.AddChild(MakeCardView(BoardAssets.CardKey));
-        deck.AddChild(MakeLabel("Deck", 22, CellBorder));
-        _root.AddChild(deck);
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key)
+        if (_assets is null || _picker.Visible || @event is not InputEventKey { Pressed: true, Echo: false } key)
         {
             return;
         }
 
-        if (key.Keycode == Key.R)
+        switch (key.Keycode)
         {
-            _seed++;
-            NewMatch();
+            case Key.R:
+                _seed++;
+                NewMatch();
+                break;
+            case Key.M:
+                _mirrorMode = _mirrorMode == MirrorMode.ShuffledMirror ? MirrorMode.PerfectMirror : MirrorMode.ShuffledMirror;
+                NewMatch();
+                break;
+            case Key.Q:
+                _bank = 1 - _bank;
+                Refresh();
+                break;
+            case Key.D:
+                _debug = !_debug;
+                Refresh();
+                break;
+            case Key.F:
+                Apply(CardPlaySystem.Apply(_world, new RefillManaCommand { Player = _viewer }));
+                break;
+            case Key.Tab:
+                _viewer = PlayerIds.Opponent(_viewer);
+                ClearSelection();
+                Refresh();
+                break;
+            case Key.Escape:
+                ClearSelection();
+                Refresh();
+                break;
+            default:
+                return;
         }
-        else if (key.Keycode == Key.M)
-        {
-            _mirrorMode = _mirrorMode == MirrorMode.ShuffledMirror
-                ? MirrorMode.PerfectMirror
-                : MirrorMode.ShuffledMirror;
-            NewMatch();
-        }
+
+        GetViewport().SetInputAsHandled();
     }
 
     private void NewMatch()
@@ -125,27 +156,77 @@ public partial class BoardScreen : Control
         {
             Seed = _seed,
             MirrorMode = _mirrorMode,
-            PlayerADeckDefinitionIds = System.Array.Empty<string>(),
-            PlayerBDeckDefinitionIds = System.Array.Empty<string>(),
+            PlayerADeckDefinitionIds = _assets!.StarterDeck,
+            PlayerBDeckDefinitionIds = _assets.StarterDeck,
         };
-        _world = MatchSetupSystem.Apply(command, _catalog).World;
+        _world = MatchSetupSystem.Apply(command, _assets.Catalog).World;
+        _bank = 0;
+        _lastMessage = string.Empty;
+        ClearSelection();
         Refresh();
     }
 
-    private void OnSlotInput(InputEvent @event, PlayerId player, int slot)
+    private void ClearSelection()
     {
-        if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+        _selectedCard = null;
+        _selectedSlot = null;
+        _picker?.Close();
+    }
+
+    private void OnHandCardClicked(int index)
+    {
+        int handIndex = _bank * BankSize + index;
+        if (handIndex >= _view.OwnHandCards.Count)
         {
             return;
         }
 
-        if (_world.Board.Side(player).IsOccupied(slot))
+        var card = _view.OwnHandCards[handIndex];
+        _selectedCard = _selectedCard == card ? null : card;
+        _selectedSlot = null;
+        Refresh();
+    }
+
+    private void OnSlotClicked(int row, int slot)
+    {
+        if (row != OwnRow || _selectedCard is not { } card || _view.OwnBoard.UnitSlots[slot - 1].HasValue)
         {
-            BoardPlacementSystem.Apply(_world, new ClearSlotCommand { Player = player, Slot = slot });
+            return;
         }
-        else
+
+        _selectedSlot = slot;
+        Refresh();
+        _picker.Open(_assets!, _view.Cards[card].DefinitionId, _view.OwnMana, _debug);
+    }
+
+    private void PlaySelected(int tier)
+    {
+        if (_selectedCard is not { } card || _selectedSlot is not { } slot)
         {
-            BoardPlacementSystem.Apply(_world, new PlaceBlankCardCommand { Player = player, Slot = slot });
+            return;
+        }
+
+        var result = CardPlaySystem.Apply(_world, _assets!.Catalog, new PlayUnitCommand
+        {
+            Player = _viewer,
+            Card = card,
+            Tier = tier,
+            Slot = slot,
+        });
+        if (result is UnitPlayedEvent)
+        {
+            ClearSelection();
+        }
+
+        Apply(result);
+    }
+
+    private void Apply(IEvent result)
+    {
+        _lastMessage = result is CommandRejectedEvent rejected ? $"rejected: {rejected.Reason}" : result.GetType().Name;
+        if (result is CommandRejectedEvent)
+        {
+            GD.Print(_lastMessage);
         }
 
         Refresh();
@@ -153,32 +234,93 @@ public partial class BoardScreen : Control
 
     private void Refresh()
     {
-        var view = ProjectionSystem.Project(_world, Viewer);
-        Render(Viewer, view.OwnBoard);
-        Render(PlayerIds.Opponent(Viewer), view.OpponentBoard);
+        _view = ProjectionSystem.Project(_world, _viewer);
+        if (_bank * BankSize >= System.Math.Max(_view.OwnHandCount, 1))
+        {
+            _bank = 0;
+        }
 
-        string mode = _mirrorMode == MirrorMode.ShuffledMirror ? "Shuffled Mirror" : "Perfect Mirror";
-        _info.Text =
-            $"G01 board preview\n\nseed {_seed}\n{mode}\n\n" +
-            "R: new seed\nM: switch mirror mode\nClick a slot: place or remove a blank card\n\n" +
-            "top row: opponent\nbottom row: you" +
-            (_assetError.Length > 0 ? $"\n\nART NOT LOADED:\n{_assetError}" : string.Empty);
+        RenderSide(OwnRow, _view.OwnBoard, _view.OwnMana);
+        RenderSide(OpponentRow, _view.OpponentBoard, _view.OpponentMana);
+
+        for (int i = 0; i < BankSize; i++)
+        {
+            int handIndex = _bank * BankSize + i;
+            var control = _handCards[i];
+            if (handIndex >= _view.OwnHandCount)
+            {
+                control.Visible = false;
+                continue;
+            }
+
+            var id = _view.OwnHandCards[handIndex];
+            var card = _view.Cards[id];
+            control.ShowCard(_assets!, card.DefinitionId, Tier(card.DefinitionId, 1), _debug, id == _selectedCard);
+        }
+
+        if (_view.OwnDeckCount > 0)
+        {
+            _deck.ShowBack(_assets!);
+        }
+        else
+        {
+            _deck.Visible = false;
+        }
+
+        _debugText.Visible = _debug;
+        _debugText.Text =
+            $"{_viewer} · seed {_seed} · {_mirrorMode}\n" +
+            $"own: mana {_view.OwnMana}/{_view.OwnMaxMana}, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2\n" +
+            $"opponent: mana {_view.OpponentMana}/{_view.OpponentMaxMana}, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}\n\n" +
+            "click hand card → free slot → 1/2/3\n" +
+            "Q bank · Tab switch player · F refill mana\nR new match · M mirror · D overlay · Esc cancel\n\n" +
+            _lastMessage;
     }
 
-    private void Render(PlayerId player, BoardSideView board)
+    private void RenderSide(int row, BoardSideView board, int mana)
     {
         for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
         {
-            _cards[(player, slot)].Visible = board.UnitSlots[slot - 1].HasValue;
+            var control = _slotCards[(row, slot)];
+            if (board.UnitSlots[slot - 1] is { } id && _view.Cards.TryGetValue(id, out var card))
+            {
+                control.ShowCard(_assets!, card.DefinitionId, Tier(card.DefinitionId, card.Tier ?? 1), _debug, false);
+            }
+            else
+            {
+                control.Visible = false;
+            }
+
+            bool selected = row == OwnRow && _selectedSlot == slot;
+            _slotCells[(row, slot)].AddThemeStyleboxOverride(
+                "panel",
+                MakeStyle(row == OwnRow ? OwnSlotFill : OpponentSlotFill, selected ? SelectedSlotBorder : CellBorder, selected ? 4 : 2));
         }
 
         foreach (var placement in board.Totems)
         {
-            _assets?.ShowIn(_totems[(player, placement.Position)], BoardAssets.KeyOf(placement.Type));
+            var (geometry, fill, stroke) = _assets!.Totem(placement.Type);
+            var lit = stroke.Lightened(0.3f);
+            bool isMana = placement.Type == TotemType.Mana;
+            _totems[(row, placement.Position)].Display(geometry, part =>
+            {
+                if (part.Kind == AssetPartKind.Stroke)
+                {
+                    return stroke;
+                }
+
+                return isMana && SegmentNumber(part.ComponentName) is int n && n <= mana ? lit : fill;
+            });
         }
     }
 
-    private void BuildSlotRow(PlayerId player, int band, Color slotFill)
+    // "segment03" → 3; anything else → null.
+    private static int? SegmentNumber(string name) =>
+        name.StartsWith("segment", System.StringComparison.Ordinal) && int.TryParse(name.Substring(7), out int n) ? n : null;
+
+    private CardTier Tier(string definitionId, int tier) => _assets!.Catalog.CardsById[definitionId].Tiers[tier - 1];
+
+    private void BuildSlotRow(int row, int band, Color slotFill)
     {
         var rows = BoardLayoutSpec.RowFractions;
         var columns = BoardLayoutSpec.ColumnFractions;
@@ -186,21 +328,26 @@ public partial class BoardScreen : Control
         {
             var cell = MakePanel(slotFill, CellBorder, columns[slot - 1], rows[band], columns[slot], rows[band + 1]);
             cell.MouseFilter = MouseFilterEnum.Stop;
-            cell.MouseDefaultCursorShape = CursorShape.PointingHand;
             int capturedSlot = slot;
-            cell.GuiInput += @event => OnSlotInput(@event, player, capturedSlot);
+            cell.GuiInput += @event =>
+            {
+                if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                {
+                    OnSlotClicked(row, capturedSlot);
+                }
+            };
             cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
             _root.AddChild(cell);
+            _slotCells[(row, slot)] = cell;
 
-            // The card is centred in its slot, a little smaller (cell_fill, BOARD_DESIGN.md).
-            var card = MakeCardView(BoardAssets.CardKey);
-            card.Visible = false;
+            var card = new CardControl(BoardPixelsPerMeter) { MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+            CardControl.Fill(card);
             cell.AddChild(card);
-            _cards[(player, slot)] = card;
+            _slotCards[(row, slot)] = card;
         }
     }
 
-    private void BuildTotemRow(PlayerId player, int band)
+    private void BuildTotemRow(int row, int band)
     {
         var rows = BoardLayoutSpec.RowFractions;
         var columns = BoardLayoutSpec.ColumnFractions;
@@ -217,39 +364,54 @@ public partial class BoardScreen : Control
             letter.OffsetTop = 6;
             cell.AddChild(letter);
 
-            // The totem is centred in its cell at the board's scale, a little smaller (cell_fill).
-            var totem = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = _assets?.CellFill ?? 1f };
-            Place(totem, 0f, 0f, 1f, 1f);
+            var totem = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = _assets!.CellFill };
+            CardControl.Fill(totem);
             cell.AddChild(totem);
-            _totems[(player, position)] = totem;
+            _totems[(row, position)] = totem;
         }
     }
 
-    private void BuildInfo()
+    // The own hand: the left margin split into four equal cells.
+    private void BuildHand()
     {
-        var columns = BoardLayoutSpec.ColumnFractions;
-        var margin = MakeRect(Background, 0f, 0f, columns[0], 1f);
-        _info = MakeLabel(string.Empty, 20, DimText);
-        _info.HorizontalAlignment = HorizontalAlignment.Left;
-        _info.VerticalAlignment = VerticalAlignment.Top;
-        _info.AutowrapMode = TextServer.AutowrapMode.WordSmart;
-        _info.OffsetLeft = 24;
-        _info.OffsetTop = 24;
-        _info.OffsetRight = -16;
-        margin.AddChild(_info);
-        _root.AddChild(margin);
+        float right = BoardLayoutSpec.ColumnFractions[0];
+        for (int i = 0; i < BankSize; i++)
+        {
+            var card = new CardControl { Visible = false };
+            Place(card, 0f, i / (float)BankSize, right, (i + 1) / (float)BankSize);
+            int index = i;
+            card.Clicked += () => OnHandCardClicked(index);
+            _root.AddChild(card);
+            _handCards[i] = card;
+        }
     }
 
-    private AssetView MakeCardView(string key)
+    // The own deck: one card back in the right margin, level with the own card row.
+    private void BuildDeck()
     {
-        var view = new AssetView { PixelsPerMeter = BoardPixelsPerMeter, Fill = _assets?.CellFill ?? 1f };
-        Place(view, 0f, 0f, 1f, 1f);
-        _assets?.ShowIn(view, key);
-        return view;
+        var rows = BoardLayoutSpec.RowFractions;
+        _deck = new CardControl(BoardPixelsPerMeter) { MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+        Place(_deck, BoardLayoutSpec.ColumnFractions[^1], rows[2], 1f, rows[3]);
+        _root.AddChild(_deck);
+    }
+
+    private void BuildDebugText()
+    {
+        var rows = BoardLayoutSpec.RowFractions;
+        _debugText = MakeLabel(string.Empty, 15, Colors.White);
+        _debugText.HorizontalAlignment = HorizontalAlignment.Left;
+        _debugText.VerticalAlignment = VerticalAlignment.Top;
+        _debugText.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        Place(_debugText, BoardLayoutSpec.ColumnFractions[^1], 0f, 1f, rows[2]);
+        _debugText.OffsetLeft = 12;
+        _debugText.OffsetTop = 12;
+        _debugText.OffsetRight = -8;
+        _debugText.Visible = false;
+        _root.AddChild(_debugText);
     }
 
     // One card fills one column: the board's meters-to-pixels factor, shared
-    // by every asset so totems and cards keep game04's proportions.
+    // by every asset on the board so totems and cards keep game04's proportions.
     private float BoardPixelsPerMeter()
     {
         if (_assets is null)

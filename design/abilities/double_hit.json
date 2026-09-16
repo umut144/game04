@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "name_key": "double_hit",
+  "note": "Hits its target twice."
+}

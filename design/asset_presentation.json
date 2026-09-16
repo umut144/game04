@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "cell_fill": 0.96,
+  "figure": {
+    "fill": "#F5F2E8",
+    "stroke": "#2F3E5C"
+  },
   "assets": {
     "card": {
       "scale": [1.12, 1.0666666666666667],

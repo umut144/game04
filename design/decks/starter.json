@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "starter",
+  "cards": [
+    {
+      "id": "rogue",
+      "count": 3
+    },
+    {
+      "id": "archer",
+      "count": 2
+    },
+    {
+      "id": "mage",
+      "count": 2
+    },
+    {
+      "id": "wizard",
+      "count": 3
+    },
+    {
+      "id": "sorcerer",
+      "count": 2
+    },
+    {
+      "id": "warrior",
+      "count": 2
+    },
+    {
+      "id": "hammerer",
+      "count": 2
+    },
+    {
+      "id": "glavier",
+      "count": 2
+    },
+    {
+      "id": "barde",
+      "count": 2
+    }
+  ]
+}

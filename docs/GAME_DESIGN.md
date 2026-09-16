@@ -195,6 +195,8 @@ healthy attacker keeps their full budget. An unhealed resource totem compounds.
 - Unspent mana is normally lost at the end of the round. Mana Mastery carries 1
   or 2 points over into the next round (§12).
 - **Draw** is 1 card per round.
+- **Starting hand is 4 cards**, dealt from the top of the shuffled deck at
+  match setup.
 - **Hand limit is 8.** Hand size and hand limit are the same thing; this
   document uses "hand limit". A player with a full hand simply does not draw —
   no card is burned, nothing is lost, the deck is untouched.
@@ -228,7 +230,8 @@ medium + 1..3 bands = 4, 5, 6
 dark   + 1..3 bands = 7, 8, 9
 ```
 
-A value of 0 is an empty wedge. The band structure stays visible when unfilled,
+The bands fill from the corner inwards: band 1 is the one in the very
+corner. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
 so the player reads "empty" rather than "missing". Reference:
 `concepts/diegetic_examples/attack-power-example/`.
 

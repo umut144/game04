@@ -109,11 +109,12 @@ fi
 # always wins over any previous_keys entry.
 design_asset_keys() {
   jq -r '.asset_keys[]' "$design_dir/asset_keys.json"
-  # From G02 every card in design/cards/*.json names its own asset. That field
-  # does not exist yet; once it does, read it here in the same shape, e.g.
-  #   for card in "$design_dir"/cards/*.json; do
-  #     [[ -e "$card" ]] && jq -r '.<field> // empty' "$card"
-  #   done
+  # Every card in design/cards/*.json names the character drawn on it (G02).
+  local card
+  for card in "$design_dir"/cards/*.json; do
+    [[ -e "$card" ]] || continue
+    jq -r '.asset_key // empty' "$card"
+  done
 }
 
 while IFS= read -r design_key; do

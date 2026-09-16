@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "sorcerer",
+  "type": "arcane",
+  "asset_key": "sorcerer",
+  "ability_name_keys": [
+    "both_front_rows"
+  ],
+  "tiers": [
+    {
+      "cost": 4,
+      "bounty": 2,
+      "attack": 2,
+      "health": 3
+    },
+    {
+      "cost": 5,
+      "bounty": 3,
+      "attack": 3,
+      "health": 4
+    },
+    {
+      "cost": 7,
+      "bounty": 5,
+      "attack": 4,
+      "health": 5
+    }
+  ]
+}

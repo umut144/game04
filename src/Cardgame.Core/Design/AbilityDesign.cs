@@ -9,4 +9,7 @@ public sealed record AbilityDesign
 {
     public required int SchemaVersion { get; init; }
     public required string NameKey { get; init; }
+
+    /// <summary>A designer's note on what the ability will do; no behaviour yet.</summary>
+    public string? Note { get; init; }
 }

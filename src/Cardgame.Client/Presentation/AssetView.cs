@@ -1,15 +1,16 @@
 using System;
+using System.Collections.Generic;
 using Cardgame.Assets;
 using Godot;
 
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// Draws one PolyTools asset inside this control: one meter of game04
-/// geometry is <see cref="PixelsPerMeter"/> × <see cref="Fill"/> pixels, and
-/// the asset's pivot (bottom centre) sits so that an asset exactly as tall as
-/// the control is centred in it — the space <see cref="Fill"/> gives up is
-/// shared evenly around the asset.
+/// Draws one asset geometry inside this control: one meter of game04 geometry
+/// is <see cref="PixelsPerMeter"/> × <see cref="Fill"/> pixels, and the
+/// asset's pivot (bottom centre) sits so that an asset exactly as tall as the
+/// control is centred in it — the space <see cref="Fill"/> gives up is shared
+/// evenly around the asset.
 /// </summary>
 public partial class AssetView : Control
 {
@@ -25,9 +26,15 @@ public partial class AssetView : Control
         Resized += QueueRedraw;
     }
 
-    public void Display(AssetGeometry geometry, Color fill, Color stroke)
+    public void Display(AssetGeometry geometry, Func<AssetPart, Color> colourOf)
     {
-        _mesh = BuildMesh(geometry, fill, stroke);
+        _mesh = BuildMesh(geometry, colourOf);
+        QueueRedraw();
+    }
+
+    public void Clear()
+    {
+        _mesh = null;
         QueueRedraw();
     }
 
@@ -46,15 +53,15 @@ public partial class AssetView : Control
         DrawMesh(_mesh, null!, transform);
     }
 
-    private static ArrayMesh BuildMesh(AssetGeometry geometry, Color fill, Color stroke)
+    private static ArrayMesh BuildMesh(AssetGeometry geometry, Func<AssetPart, Color> colourOf)
     {
-        var vertices = new System.Collections.Generic.List<Vector2>();
-        var colours = new System.Collections.Generic.List<Color>();
-        var indices = new System.Collections.Generic.List<int>();
+        var vertices = new List<Vector2>();
+        var colours = new List<Color>();
+        var indices = new List<int>();
         foreach (var part in geometry.Parts)
         {
             int offset = vertices.Count;
-            var colour = part.Kind == AssetPartKind.Fill ? fill : stroke;
+            var colour = colourOf(part);
             for (int i = 0; i < part.Vertices.Length; i += 2)
             {
                 vertices.Add(new Vector2(part.Vertices[i], part.Vertices[i + 1]));

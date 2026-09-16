@@ -40,5 +40,9 @@ public sealed class SyncedAssetLibrary
     }
 
     public AssetGeometry Build(string assetKey, AssetPresentation presentation) =>
-        AssetGeometry.Build(Load(assetKey), presentation.ScaleX, presentation.ScaleY);
+        Build(assetKey, presentation.ScaleX, presentation.ScaleY);
+
+    /// <summary>Builds an asset, resolving any asset references from this library.</summary>
+    public AssetGeometry Build(string assetKey, double scaleX, double scaleY) =>
+        AssetGeometry.Build(Load(assetKey), scaleX, scaleY, Load);
 }

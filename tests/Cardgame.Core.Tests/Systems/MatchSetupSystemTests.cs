@@ -75,7 +75,7 @@ public sealed class MatchSetupSystemTests
     }
 
     [Fact]
-    public void MatchSetupDoesNotDealAStartingHand()
+    public void MatchSetupDealsFourCardsFromTheTopOfEachDeckAndFullMana()
     {
         var catalog = TestCardDesigns.BuildCatalog();
         var deck = TestCardDesigns.BuildDeck(10);
@@ -89,9 +89,34 @@ public sealed class MatchSetupSystemTests
 
         var (world, _) = MatchSetupSystem.Apply(command, catalog);
 
-        Assert.Empty(world.PlayerA.Hand.Cards);
+        // Instance ids follow build order, so the ids of hand and deck
+        // together are exactly the ten cards built, the hand first.
+        var dealtThenLeft = world.PlayerA.Hand.Cards.Concat(world.PlayerA.Deck.Cards).Select(card => card.Id.Value);
+        Assert.Equal(4, world.PlayerA.Hand.Cards.Count);
+        Assert.Equal(4, world.PlayerB.Hand.Cards.Count);
+        Assert.Equal(6, world.PlayerA.Deck.Cards.Count);
+        Assert.Equal(Enumerable.Range(0, 10).Select(i => (long)i), dealtThenLeft.OrderBy(id => id));
+        Assert.All(world.PlayerA.Hand.Cards, card => Assert.Null(card.Tier));
+        Assert.Equal(7, world.PlayerA.Mana.Current);
+        Assert.Equal(7, world.PlayerB.Mana.Maximum);
+    }
+
+    [Fact]
+    public void AShortDeckDealsWhatItHas()
+    {
+        var command = new SetupMatchCommand
+        {
+            Seed = 3,
+            MirrorMode = MirrorMode.ShuffledMirror,
+            PlayerADeckDefinitionIds = TestCardDesigns.BuildDeck(2),
+            PlayerBDeckDefinitionIds = Array.Empty<string>(),
+        };
+
+        var (world, _) = MatchSetupSystem.Apply(command, TestCardDesigns.BuildCatalog());
+
+        Assert.Equal(2, world.PlayerA.Hand.Cards.Count);
+        Assert.Empty(world.PlayerA.Deck.Cards);
         Assert.Empty(world.PlayerB.Hand.Cards);
-        Assert.Equal(10, world.PlayerA.Deck.Cards.Count);
     }
 
     [Fact]

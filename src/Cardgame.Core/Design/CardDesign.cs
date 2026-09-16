@@ -12,6 +12,9 @@ public sealed record CardDesign
     public required int SchemaVersion { get; init; }
     public required string Id { get; init; }
     public CardType? Type { get; init; }
+
+    /// <summary>The PolyTools character drawn on the card (SYNC-02); optional.</summary>
+    public string? AssetKey { get; init; }
     public required IReadOnlyList<string> AbilityNameKeys { get; init; }
     public required IReadOnlyList<CardTierDesign> Tiers { get; init; }
 }
