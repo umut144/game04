@@ -616,6 +616,28 @@ An earlier draft of this section specified all of it. It was withdrawn as
 premature rather than kept as a guess: a rule that looks decided is worse than a
 gap, because nobody asks about it again.
 
+### 8.5 Attacking (G05)
+
+How a unit attack is carried out, decided in G05 (`docs/TASKS.md`, `G05-01` to
+`G05-04`):
+
+- **Choose, then aim.** The active player picks one of their own units, then an
+  enemy unit within its reach. Units that need no target (the Sorcerer, which
+  hits both front rows) attack as soon as they are chosen.
+- **Once per turn.** A unit attacks at most once in each of its owner's turns.
+- **Not in the turn it was played**, unless it has **Rush** (the Rogue's
+  Tier 3).
+- **No counter-damage.** Only the attacker deals damage.
+- **Damage stays.** A damaged unit keeps its damage until it is destroyed; the
+  lost part of its Health is shown red-hatched on the card.
+- **Halves round down.** Wherever a rule halves a value — Cleave's damage to
+  the neighbours, for one — the result is rounded **down**. This is a design
+  principle, not a Cleave detail.
+- **Arcane refund:** at most 1 mana per attack, however many units the attack
+  destroyed (G05's reading of "kills something", §8.2).
+- Status effects (Stun, Burn, Poison) and the Bard's support wait for G07; G05
+  deals damage only.
+
 ## 9. Status effects
 
 Three status effects exist today, plus Protect. They differ in their clock, and
@@ -694,6 +716,9 @@ A card's Bounty is paid **to the opponent**:
 - for a unit on the board, when it is destroyed (§8.3),
 - for a card that is used and consumed, **immediately on use** — the Tier 2
   Stone hands the opponent its Coins the moment it is thrown (§8.4).
+
+The opponent is always the owner's opponent — also when the owner destroyed
+their own unit (G05, `G05-03`).
 
 Bounty is therefore a genuine cost of playing a strong or cheap card, and it is
 the only value on the card that the *owner* does not want to be high.

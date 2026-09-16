@@ -29,8 +29,8 @@ public sealed class WorldStateDumperTests
         string starter = world.Turn.StartingPlayer.ToString();
         string other = PlayerIds.Opponent(world.Turn.StartingPlayer).ToString();
         Assert.Contains($"round=1 active={starter}", dump);
-        Assert.Contains($"{starter}: deck=4 hand=4 destroyed=0 mana=7/7", dump);
-        Assert.Contains($"{other}: deck=5 hand=3 destroyed=0 mana=7/7", dump);
+        Assert.Contains($"{starter}: deck=4 hand=4 destroyed=0 mana=7/7 coins=0", dump);
+        Assert.Contains($"{other}: deck=5 hand=3 destroyed=0 mana=7/7 coins=0", dump);
         Assert.Contains("PlayerA board: totems=A:", dump);
         Assert.Contains("slots=[-,-,-,-,-,-]", dump);
     }

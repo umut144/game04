@@ -170,6 +170,28 @@ public static class DesignCatalogLoader
                 }
             }
 
+            if (design.Attack is { } attack)
+            {
+                bool needsTarget = attack.Pattern != AttackPattern.BothFrontRows;
+                if (needsTarget && attack.Range is not (>= 0 and <= 5))
+                {
+                    errors.Add($"{sourceName}: card '{design.Id}' needs an attack range of 0-5 for {attack.Pattern}");
+                }
+
+                if (!needsTarget && attack.Range is not null)
+                {
+                    errors.Add($"{sourceName}: card '{design.Id}' has a range, but {attack.Pattern} takes no target");
+                }
+            }
+
+            foreach (var tierKey in design.Tiers.SelectMany(tier => tier.AbilityNameKeys ?? Array.Empty<string>()))
+            {
+                if (!knownAbilities.Contains(tierKey))
+                {
+                    errors.Add($"{sourceName}: card '{design.Id}' has a tier with unknown ability '{tierKey}'");
+                }
+            }
+
             var seenAbilityKeys = new HashSet<string>();
             foreach (var abilityNameKey in design.AbilityNameKeys)
             {
@@ -189,6 +211,7 @@ public static class DesignCatalogLoader
                 Id = design.Id,
                 Type = design.Type,
                 AssetKey = design.AssetKey,
+                Attack = design.Attack is { } profile ? new AttackProfile(profile.Range, profile.Pattern) : null,
                 AbilityNameKeys = design.AbilityNameKeys,
                 Tiers = design.Tiers
                     .Select(tier => new CardTier
@@ -197,6 +220,7 @@ public static class DesignCatalogLoader
                         Bounty = tier.Bounty,
                         Attack = tier.Attack,
                         Health = tier.Health,
+                        AbilityNameKeys = tier.AbilityNameKeys ?? Array.Empty<string>(),
                     })
                     .ToArray(),
             };

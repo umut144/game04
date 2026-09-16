@@ -17,4 +17,13 @@ public sealed record CardDesign
     public string? AssetKey { get; init; }
     public required IReadOnlyList<string> AbilityNameKeys { get; init; }
     public required IReadOnlyList<CardTierDesign> Tiers { get; init; }
+
+    /// <summary>Omitted or null for a card that does not attack.</summary>
+    public AttackDesign? Attack { get; init; }
+}
+
+public sealed record AttackDesign
+{
+    public int? Range { get; init; }
+    public required AttackPattern Pattern { get; init; }
 }

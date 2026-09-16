@@ -14,4 +14,10 @@ public sealed record CardDefinition
     public string? AssetKey { get; init; }
     public required IReadOnlyList<string> AbilityNameKeys { get; init; }
     public required IReadOnlyList<CardTier> Tiers { get; init; }
+
+    /// <summary>Null for a card that does not attack (the Barde until G07).</summary>
+    public AttackProfile? Attack { get; init; }
+
+    public bool Has(string abilityNameKey, int tier) =>
+        AbilityNameKeys.Contains(abilityNameKey) || Tiers[tier - 1].AbilityNameKeys.Contains(abilityNameKey);
 }

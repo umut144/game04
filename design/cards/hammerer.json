@@ -6,6 +6,10 @@
   "ability_name_keys": [
     "splash_stun"
   ],
+  "attack": {
+    "range": 0,
+    "pattern": "splash"
+  },
   "tiers": [
     {
       "cost": 3,

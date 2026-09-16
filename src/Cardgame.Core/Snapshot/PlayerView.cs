@@ -26,6 +26,8 @@ public sealed record PlayerView
     public required int BonusSeconds { get; init; }
     public bool IsOwnTurn => ActivePlayer == Viewer;
     public required int OwnMana { get; init; }
+    public required int OwnCoins { get; init; }
+    public required int OpponentCoins { get; init; }
     public required int OwnMaxMana { get; init; }
     public required int OpponentMana { get; init; }
     public required int OpponentMaxMana { get; init; }

@@ -4,6 +4,10 @@
   "type": null,
   "asset_key": "archerf",
   "ability_name_keys": [],
+  "attack": {
+    "range": 4,
+    "pattern": "single"
+  },
   "tiers": [
     {
       "cost": 2,

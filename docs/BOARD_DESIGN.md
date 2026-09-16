@@ -88,6 +88,14 @@ with Q. A hand card fits its cell's height, so it is drawn 300 tall and 210
 wide before `cell_fill`, smaller than a board card. The own deck is one card
 back in the right margin, level with the own card row.
 
+## Coins
+
+The own Coins are a strip at the very top of the right margin, as wide as the
+margin (240 px at the reference). Each coin is the PolyTools `coin` prop with a
+diameter of a quarter of the drawn totem height (246.9 / 4 ≈ 61.7 px). Coins
+are laid left to right and overlap by a fixed step, `(240 − diameter) / 19`,
+so up to 20 fit; more are not drawn.
+
 ## Breathing room
 
 Cards and totems are drawn at **96 %** of the size above, centred in their

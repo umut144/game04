@@ -6,6 +6,10 @@
   "ability_name_keys": [
     "area_three"
   ],
+  "attack": {
+    "range": 2,
+    "pattern": "area_three"
+  },
   "tiers": [
     {
       "cost": 3,

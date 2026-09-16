@@ -6,6 +6,10 @@
   "ability_name_keys": [
     "double_hit"
   ],
+  "attack": {
+    "range": 3,
+    "pattern": "double_hit"
+  },
   "tiers": [
     {
       "cost": 2,

@@ -6,6 +6,11 @@
     "stroke": "#2F3E5C"
   },
   "assets": {
+    "coin": {
+      "scale": [1.0, 1.0],
+      "fill": "#D4AF37",
+      "stroke": "#7A5C12"
+    },
     "card": {
       "scale": [1.12, 1.0666666666666667],
       "fill": "#F5F2E8",

@@ -6,6 +6,7 @@
   "ability_name_keys": [
     "support"
   ],
+  "attack": null,
   "tiers": [
     {
       "cost": 2,

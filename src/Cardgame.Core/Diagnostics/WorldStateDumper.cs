@@ -42,7 +42,7 @@ public static class WorldStateDumper
     private static void AppendPlayer(StringBuilder text, string label, PlayerZones zones)
     {
         text.AppendLine(
-            $"{label}: deck={zones.Deck.Cards.Count} hand={zones.Hand.Cards.Count} destroyed={zones.Destroyed.Cards.Count} mana={zones.Mana.Current}/{zones.Mana.Maximum}");
+            $"{label}: deck={zones.Deck.Cards.Count} hand={zones.Hand.Cards.Count} destroyed={zones.Destroyed.Cards.Count} mana={zones.Mana.Current}/{zones.Mana.Maximum} coins={zones.Coins}");
     }
 
     // e.g. "PlayerA board: totems=A:Life B:Time C:Mana slots=[card#3,-,-,-,-,-]"

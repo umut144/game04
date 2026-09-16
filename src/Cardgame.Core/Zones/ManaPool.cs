@@ -25,5 +25,7 @@ public sealed class ManaPool
 
     public void Refill() => Current = Maximum;
 
+    public void Gain(int mana) => Set(Current + mana);
+
     public void Set(int mana) => Current = Math.Clamp(mana, 0, Maximum);
 }

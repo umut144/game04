@@ -6,6 +6,9 @@
   "ability_name_keys": [
     "both_front_rows"
   ],
+  "attack": {
+    "pattern": "both_front_rows"
+  },
   "tiers": [
     {
       "cost": 4,

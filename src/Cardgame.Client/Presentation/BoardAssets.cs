@@ -98,6 +98,12 @@ public sealed class BoardAssets
         return art;
     }
 
+    public const string CoinKey = "coin";
+
+    public AssetGeometry Coin => _assets[CoinKey].Geometry;
+
+    public (AssetGeometry Geometry, Color Fill, Color Stroke) CoinArt => _assets[CoinKey];
+
     public (AssetGeometry Geometry, Color Fill, Color Stroke) Totem(TotemType type)
     {
         string key = KeyOf(type);

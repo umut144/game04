@@ -38,6 +38,15 @@ public static class TurnSystem
     internal static TurnStartedEvent BeginTurn(WorldState world, PlayerId player)
     {
         world.Turn.ActivePlayer = player;
+        foreach (var id in world.Board.Side(player).UnitSlots)
+        {
+            if (id is { } unit)
+            {
+                world.Board.Units[unit].Ready = true;
+                world.Board.Units[unit].HasAttacked = false;
+            }
+        }
+
         var zones = world.Zones(player);
         int mana = world.MatchMode.IsMirror()
             ? zones.Mana.Maximum

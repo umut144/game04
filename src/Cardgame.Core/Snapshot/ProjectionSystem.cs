@@ -27,6 +27,8 @@ public static class ProjectionSystem
             BaseSeconds = world.Clock.BaseSeconds,
             BonusSeconds = world.Clock.BonusSeconds,
             OwnMana = own.Mana.Current,
+            OwnCoins = own.Coins,
+            OpponentCoins = other.Coins,
             OwnMaxMana = own.Mana.Maximum,
             OpponentMana = other.Mana.Current,
             OpponentMaxMana = other.Mana.Maximum,
@@ -34,7 +36,17 @@ public static class ProjectionSystem
             OpponentBoard = BoardSideView.CopyOf(world.Board.Side(opponent)),
             Cards = own.Hand.Cards
                 .Concat(world.Board.Units.Values)
-                .ToDictionary(card => card.Id, card => new CardView(card.Id, card.DefinitionId, card.Tier)),
+                .ToDictionary(card => card.Id, card => new CardView(
+                    card.Id,
+                    card.DefinitionId,
+                    card.Tier,
+                    card.Damage,
+                    card.Ready && !card.HasAttacked && world.Turn.ActivePlayer == OwnerOf(world, card))),
         };
     }
+
+    private static PlayerId? OwnerOf(WorldState world, CardInstance card) =>
+        world.Board.PlayerA.UnitSlots.Contains(card.Id) ? PlayerId.PlayerA
+        : world.Board.PlayerB.UnitSlots.Contains(card.Id) ? PlayerId.PlayerB
+        : null;
 }

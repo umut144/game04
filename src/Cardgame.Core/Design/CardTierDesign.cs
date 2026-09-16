@@ -7,4 +7,5 @@ public sealed record CardTierDesign
     public required int Bounty { get; init; }
     public required int Attack { get; init; }
     public required int Health { get; init; }
+    public IReadOnlyList<string>? AbilityNameKeys { get; init; }
 }

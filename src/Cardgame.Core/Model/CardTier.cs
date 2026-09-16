@@ -11,4 +11,7 @@ public sealed record CardTier
     public required int Bounty { get; init; }
     public required int Attack { get; init; }
     public required int Health { get; init; }
+
+    /// <summary>Abilities only this tier has, on top of the card's own.</summary>
+    public IReadOnlyList<string> AbilityNameKeys { get; init; } = Array.Empty<string>();
 }

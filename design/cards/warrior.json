@@ -6,6 +6,10 @@
   "ability_name_keys": [
     "cleave"
   ],
+  "attack": {
+    "range": 0,
+    "pattern": "cleave"
+  },
   "tiers": [
     {
       "cost": 2,

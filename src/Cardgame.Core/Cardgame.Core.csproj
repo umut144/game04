@@ -4,4 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cardgame.Core.Tests" />
+  </ItemGroup>
+
 </Project>

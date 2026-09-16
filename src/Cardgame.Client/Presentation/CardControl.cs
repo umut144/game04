@@ -1,18 +1,24 @@
 using System;
+using System.Linq;
+using Cardgame.Assets;
 using Cardgame.Core.Model;
 using Godot;
 
 namespace Cardgame.Client.Presentation;
 
 /// <summary>
-/// One card on screen: its art sized to fit this control's height, a
+/// One card on screen: its art sized to fit this control's height, the
+/// health it has lost drawn as red hatching over the health wedge (G05-04), a
 /// selection frame, and the debug overlay's four corner numbers.
 /// </summary>
 public partial class CardControl : Control
 {
     private static readonly Color SelectionColour = new("E3B341");
+    private static readonly Color LostHealthColour = new("D93025");
+    private static readonly Shader HatchShader = GD.Load<Shader>("res://Presentation/HatchMask.gdshader");
 
     private readonly AssetView _art;
+    private readonly AssetView _lostHealth;
     private readonly Panel _frame;
     private readonly Label[] _numbers = new Label[4];
     private BoardAssets? _assets;
@@ -35,6 +41,11 @@ public partial class CardControl : Control
         _art.PixelsPerMeter = pixelsPerMeter ?? (() => _assets is null ? 1f : Size.Y / _assets.CardHeight);
         Fill(_art);
         AddChild(_art);
+
+        _lostHealth = new AssetView { Material = new ShaderMaterial { Shader = HatchShader } };
+        _lostHealth.PixelsPerMeter = _art.PixelsPerMeter;
+        Fill(_lostHealth);
+        AddChild(_lostHealth);
 
         var corners = new[] { (0f, 0f), (1f, 0f), (0f, 1f), (1f, 1f) };
         for (int i = 0; i < 4; i++)
@@ -65,13 +76,36 @@ public partial class CardControl : Control
         };
     }
 
-    public void ShowCard(BoardAssets assets, string definitionId, CardTier values, bool debug, bool selected)
+    /// <param name="values">The tier's values; <paramref name="damage"/> is taken off its health.</param>
+    public void ShowCard(BoardAssets assets, string definitionId, CardTier values, bool debug, bool selected, int damage = 0)
     {
         _assets = assets;
+        int maxHealth = values.Health;
+        int health = System.Math.Max(maxHealth - damage, 0);
+        var shown = values with { Health = health };
+        var art = assets.CardArt(definitionId);
         _art.Fill = assets.CellFill;
-        _art.Display(assets.CardArt(definitionId), part => CardColours.Of(part, values, assets));
+        _art.Display(art, part => CardColours.Of(part, shown, assets));
+
+        _lostHealth.Fill = assets.CellFill;
+        var lost = art.Where(part =>
+            part.Layer == BoardAssets.CardLayer
+            && part.Kind == AssetPartKind.Fill
+            && GlyphNumber(part.ComponentName, "health") is int glyph
+            && GlyphBands.IsFilled(System.Math.Min(maxHealth, GlyphBands.MaximumValue), glyph)
+            && !GlyphBands.IsFilled(System.Math.Min(health, GlyphBands.MaximumValue), glyph));
+        if (damage > 0 && lost.Parts.Count > 0)
+        {
+            _lostHealth.Display(lost, _ => LostHealthColour);
+        }
+        else
+        {
+            _lostHealth.Clear();
+        }
+
         _frame.Visible = selected;
-        string[] texts = { values.Cost.ToString(), values.Bounty.ToString(), values.Attack.ToString(), values.Health.ToString() };
+        string healthText = damage > 0 ? $"{health}/{maxHealth}" : maxHealth.ToString();
+        string[] texts = { values.Cost.ToString(), values.Bounty.ToString(), values.Attack.ToString(), healthText };
         for (int i = 0; i < 4; i++)
         {
             _numbers[i].Text = texts[i];
@@ -84,6 +118,7 @@ public partial class CardControl : Control
     public void ShowBack(BoardAssets assets)
     {
         _assets = assets;
+        _lostHealth.Clear();
         _art.Fill = assets.CellFill;
         _art.Display(assets.Card, part => CardColours.Of(part, null, assets));
         _frame.Visible = false;
@@ -94,6 +129,14 @@ public partial class CardControl : Control
 
         Visible = true;
     }
+
+    // "health_glyph02" → 2 for corner "health"; anything else → null.
+    private static int? GlyphNumber(string name, string corner) =>
+        name.StartsWith(corner + "_glyph0", StringComparison.Ordinal)
+        && name.Length == corner.Length + 8
+        && int.TryParse(name.Substring(corner.Length + 7), out int n) && n is >= 1 and <= 3
+            ? n
+            : null;
 
     public static void Fill(Control control)
     {

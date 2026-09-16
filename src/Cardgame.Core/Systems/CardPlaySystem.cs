@@ -4,6 +4,7 @@ using Cardgame.Core.Board;
 using Cardgame.Core.Commands;
 using Cardgame.Core.Design;
 using Cardgame.Core.Events;
+using Cardgame.Core.Model;
 
 /// <summary>
 /// Playing a unit from hand (G02): the card must be in the player's hand,
@@ -51,9 +52,8 @@ public static class CardPlaySystem
 
         zones.Mana.Pay(cost);
         zones.Hand.Remove(card);
-        card.Tier = command.Tier;
-        side.Occupy(command.Slot, card.Id);
-        world.Board.Place(card);
+        PlaceOnBoard(world, command.Player, command.Slot, card, command.Tier,
+            catalog.CardsById[card.DefinitionId].Has(Abilities.Rush, command.Tier));
 
         return new UnitPlayedEvent
         {
@@ -63,6 +63,16 @@ public static class CardPlaySystem
             Slot = command.Slot,
             ManaPaid = cost,
         };
+    }
+
+    internal static void PlaceOnBoard(WorldState world, PlayerId player, int slot, CardInstance card, int tier, bool ready)
+    {
+        card.Tier = tier;
+        card.Damage = 0;
+        card.Ready = ready;
+        card.HasAttacked = false;
+        world.Board.Side(player).Occupy(slot, card.Id);
+        world.Board.Place(card);
     }
 
     public static IEvent Apply(WorldState world, RefillManaCommand command)

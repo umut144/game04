@@ -21,7 +21,7 @@ Layout, once populated:
 - `decks/<id>.json` — a deck as card ids with counts; `starter.json` is the
   20-card mirror deck both sides play until deck composition exists (G10).
 - `asset_keys.json` — the PolyTools asset keys game04 uses that no card
-  names itself: the card frame (`card`) and the three totems. It is a
+  names itself: the card frame (`card`), the three totems and the `coin`. It is a
   reference, not a copy — the vector data lives in
   `src/Cardgame.Client/assets/polytools/`, written only by the PolyTools sync.
   The sync *reads* this file (and, from G02 on, each card's own asset key in
@@ -34,6 +34,9 @@ Layout, once populated:
   the manifests carry none. `cell_fill` (0.96) is how much of its board cell a
   card or totem fills, drawn centred. Read by `Cardgame.Assets`
   (`BOARD_DESIGN.md`).
+
+Each card's `attack` holds its reach (`range`) and damage `pattern`
+(G05, `GAME_DESIGN.md` §8.5); the Bard has none.
 
 The cards and abilities are G02's first set: rough values to get moving, no
 balance claim (`docs/TASKS.md`, `G02-01`).

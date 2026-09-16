@@ -3,6 +3,7 @@ using System.Linq;
 using Cardgame.Assets;
 using Cardgame.Core;
 using Cardgame.Core.Board;
+using Cardgame.Core.Combat;
 using Cardgame.Core.Commands;
 using Cardgame.Core.Events;
 using Cardgame.Core.Model;
@@ -23,6 +24,11 @@ namespace Cardgame.Client.Presentation;
 /// totem's segments show the mana left; the time totem drains through its
 /// segments, base time first, then — after a flip — bonus time. Clicking the
 /// own time totem or pressing Tab ends the turn.
+///
+/// Attacking (G05): click an own unit that may attack; the fields it can aim
+/// at get a red attack frame, hovering one shows what the attack would hit,
+/// clicking it attacks. A pattern without a target frames every field it hits.
+/// Coins are a strip at the top of the right margin.
 ///
 /// Dev bootstrap: there is no server yet, so this node holds the world,
 /// keeps the turn clock (CORE-01 gives real time to the server later) and
@@ -71,6 +77,11 @@ public partial class BoardScreen : Control
     private CardInstanceId? _selectedCard;
     private int? _selectedSlot;
     private string _lastMessage = string.Empty;
+    private int? _attackerSlot;
+    private FieldRef? _hovered;
+    private readonly Dictionary<(int Row, int Slot), AttackFrame> _frames = new();
+    private readonly List<AssetView> _coins = new();
+    private const int MaxCoinsShown = 20;
 
     private Control _root = null!;
     private CardControl _deck = null!;
@@ -105,6 +116,7 @@ public partial class BoardScreen : Control
         BuildHand();
         BuildDeck();
         BuildDebugText();
+        BuildCoins();
 
         _picker = new TierPicker();
         _picker.TierChosen += PlaySelected;
@@ -266,6 +278,8 @@ public partial class BoardScreen : Control
     {
         _selectedCard = null;
         _selectedSlot = null;
+        _attackerSlot = null;
+        _hovered = null;
         _picker?.Close();
     }
 
@@ -280,6 +294,7 @@ public partial class BoardScreen : Control
         var card = _view.OwnHandCards[handIndex];
         _selectedCard = _selectedCard == card ? null : card;
         _selectedSlot = null;
+        _attackerSlot = null;
         Refresh();
     }
 
@@ -292,9 +307,46 @@ public partial class BoardScreen : Control
         }
     }
 
+    private FieldRef FieldOf(int row, int slot) => new(row == OwnRow ? _viewer : PlayerIds.Opponent(_viewer), slot);
+
+    private int RowOf(PlayerId side) => side == _viewer ? OwnRow : OpponentRow;
+
     private void OnSlotClicked(int row, int slot)
     {
-        if (row != OwnRow || _selectedCard is not { } card || _view.OwnBoard.UnitSlots[slot - 1].HasValue)
+        var field = FieldOf(row, slot);
+        if (_attackerSlot is int attacker)
+        {
+            if (row == OwnRow && slot == attacker)
+            {
+                ClearSelection();
+                Refresh();
+                return;
+            }
+
+            if (AttackFields().Contains(field))
+            {
+                Attack(attacker, field);
+                return;
+            }
+        }
+
+        if (row == OwnRow && _view.OwnBoard.UnitSlots[slot - 1] is { } unit)
+        {
+            if (_view.Cards[unit].CanAttackNow)
+            {
+                ClearSelection();
+                _attackerSlot = slot;
+            }
+            else
+            {
+                _lastMessage = CombatRules.WhyCannotAttack(_world, _assets!.Catalog, _viewer, slot) ?? string.Empty;
+            }
+
+            Refresh();
+            return;
+        }
+
+        if (row != OwnRow || _selectedCard is not { } card)
         {
             return;
         }
@@ -302,6 +354,109 @@ public partial class BoardScreen : Control
         _selectedSlot = slot;
         Refresh();
         _picker.Open(_assets!, _view.Cards[card].DefinitionId, _view.OwnMana, _debug);
+    }
+
+    // Fields the selected attacker frames: its targets, or — for an attack
+    // without a target — everything it would hit.
+    private IReadOnlyList<FieldRef> AttackFields()
+    {
+        if (_attackerSlot is not int slot)
+        {
+            return System.Array.Empty<FieldRef>();
+        }
+
+        var profile = CombatRules.ProfileOf(_world, _assets!.Catalog, _viewer, slot);
+        return profile is { NeedsTarget: false }
+            ? CombatRules.AffectedFields(_world, _assets.Catalog, _viewer, slot, null).Select(f => f.Field).ToArray()
+            : CombatRules.Targets(_world, _assets.Catalog, _viewer, slot);
+    }
+
+    private void Attack(int attackerSlot, FieldRef target)
+    {
+        var profile = CombatRules.ProfileOf(_world, _assets!.Catalog, _viewer, attackerSlot);
+        var before = _view;
+        var result = CombatSystem.Apply(_world, _assets.Catalog, new AttackCommand
+        {
+            Player = _viewer,
+            AttackerSlot = attackerSlot,
+            Target = profile is { NeedsTarget: true } ? target : null,
+        });
+
+        if (result is UnitAttackedEvent attacked)
+        {
+            _attackerSlot = null;
+            _hovered = null;
+            PlayAttack(before, attacked);
+        }
+
+        Apply(result);
+    }
+
+    // Feedback: the attacker lunges towards its target, hit fields flash red,
+    // destroyed cards fade out where they stood.
+    private void PlayAttack(PlayerView before, UnitAttackedEvent attacked)
+    {
+        var attackerCell = _slotCells[(OwnRow, attacked.AttackerSlot)];
+        var card = _slotCards[(OwnRow, attacked.AttackerSlot)];
+        var aim = attacked.Target is { } target ? _slotCells[(RowOf(target.Side), target.Slot)] : attackerCell;
+        var lunge = (aim.GlobalPosition - attackerCell.GlobalPosition).LimitLength(1f) * 40f;
+        var tween = CreateTween();
+        tween.TweenProperty(card, "position", lunge, 0.08f);
+        tween.TweenProperty(card, "position", Vector2.Zero, 0.14f);
+
+        foreach (var hit in attacked.Hits)
+        {
+            var cell = _slotCells[(RowOf(hit.Field.Side), hit.Field.Slot)];
+            var flash = CreateTween();
+            flash.TweenProperty(cell, "modulate", new Color(1f, 0.45f, 0.45f), 0.08f);
+            flash.TweenProperty(cell, "modulate", Colors.White, 0.35f);
+
+            if (hit.Destroyed && before.Cards.TryGetValue(hit.Card, out var gone))
+            {
+                var ghost = new CardControl(BoardPixelsPerMeter) { MouseFilter = MouseFilterEnum.Ignore };
+                CardControl.Fill(ghost);
+                cell.AddChild(ghost);
+                ghost.ShowCard(_assets!, gone.DefinitionId, Tier(gone.DefinitionId, gone.Tier ?? 1), false, false, gone.Damage + hit.Damage);
+                var fade = CreateTween();
+                fade.TweenProperty(ghost, "modulate", new Color(1f, 0.3f, 0.3f, 0f), 0.6f);
+                fade.TweenCallback(Callable.From(ghost.QueueFree));
+            }
+        }
+    }
+
+    private void OnSlotHovered(int row, int slot, bool entered)
+    {
+        _hovered = entered ? FieldOf(row, slot) : null;
+        RenderAttackFrames();
+    }
+
+    private void RenderAttackFrames()
+    {
+        foreach (var frame in _frames.Values)
+        {
+            frame.Visible = false;
+            frame.Affected = false;
+        }
+
+        var fields = AttackFields();
+        foreach (var field in fields)
+        {
+            _frames[(RowOf(field.Side), field.Slot)].Visible = true;
+        }
+
+        if (_attackerSlot is not int slot || _hovered is not { } hovered || !fields.Contains(hovered))
+        {
+            return;
+        }
+
+        var profile = CombatRules.ProfileOf(_world, _assets!.Catalog, _viewer, slot);
+        var aim = profile is { NeedsTarget: true } ? hovered : (FieldRef?)null;
+        foreach (var (field, _) in CombatRules.AffectedFields(_world, _assets.Catalog, _viewer, slot, aim))
+        {
+            var frame = _frames[(RowOf(field.Side), field.Slot)];
+            frame.Visible = true;
+            frame.Affected = true;
+        }
     }
 
     private void PlaySelected(int tier)
@@ -374,12 +529,15 @@ public partial class BoardScreen : Control
             _deck.Visible = false;
         }
 
+        RenderAttackFrames();
+        RenderCoins();
         _debugText.Visible = _debug;
         _debugText.Text =
             $"{_viewer} · round {_view.Round} · seed {_seed} · {_matchMode}\n" +
             $"clock {(_inBonus ? "bonus" : "base")} {_elapsed:0.0}s of {_view.BaseSeconds}+{_view.BonusSeconds}{(_paused ? " · PAUSED" : string.Empty)}\n" +
             $"own: mana {_view.OwnMana}/{_view.OwnMaxMana}, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2\n" +
-            $"opponent: mana {_view.OpponentMana}/{_view.OpponentMaxMana}, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}\n\n" +
+            $"own coins {_view.OwnCoins}, opponent: mana {_view.OpponentMana}/{_view.OpponentMaxMana}, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}, coins {_view.OpponentCoins}\n\n" +
+            "click own unit → framed target: attack\n" +
             "click hand card → free slot → 1/2/3\n" +
             "Tab or click own time totem: end turn\n" +
             "Q bank · P pause · F refill mana\nR new match · M mode · D overlay · Esc cancel\n\n" +
@@ -393,7 +551,8 @@ public partial class BoardScreen : Control
             var control = _slotCards[(row, slot)];
             if (board.UnitSlots[slot - 1] is { } id && _view.Cards.TryGetValue(id, out var card))
             {
-                control.ShowCard(_assets!, card.DefinitionId, Tier(card.DefinitionId, card.Tier ?? 1), _debug, false);
+                bool attacking = row == OwnRow && _attackerSlot == slot;
+                control.ShowCard(_assets!, card.DefinitionId, Tier(card.DefinitionId, card.Tier ?? 1), _debug, attacking, card.Damage);
             }
             else
             {
@@ -470,6 +629,8 @@ public partial class BoardScreen : Control
                     OnSlotClicked(row, capturedSlot);
                 }
             };
+            cell.MouseEntered += () => OnSlotHovered(row, capturedSlot, true);
+            cell.MouseExited += () => OnSlotHovered(row, capturedSlot, false);
             cell.AddChild(MakeLabel(slot.ToString(), 28, DimText));
             _root.AddChild(cell);
             _slotCells[(row, slot)] = cell;
@@ -478,6 +639,11 @@ public partial class BoardScreen : Control
             CardControl.Fill(card);
             cell.AddChild(card);
             _slotCards[(row, slot)] = card;
+
+            var frame = new AttackFrame();
+            CardControl.Fill(frame);
+            cell.AddChild(frame);
+            _frames[(row, slot)] = frame;
         }
     }
 
@@ -547,6 +713,54 @@ public partial class BoardScreen : Control
         _deck = new CardControl(BoardPixelsPerMeter) { MouseFilter = MouseFilterEnum.Ignore, Visible = false };
         Place(_deck, BoardLayoutSpec.ColumnFractions[^1], rows[2], 1f, rows[3]);
         _root.AddChild(_deck);
+    }
+
+    // The own coins: a strip across the top of the right margin, one coin
+    // high. A coin is a quarter of a totem's height across; up to 20 overlap
+    // from left to right.
+    private void BuildCoins()
+    {
+        for (int i = 0; i < MaxCoinsShown; i++)
+        {
+            var coin = new AssetView { PixelsPerMeter = CoinPixelsPerMeter, Visible = false };
+            _root.AddChild(coin);
+            _coins.Add(coin);
+        }
+    }
+
+    private float CoinDiameter() =>
+        GetViewportRect().Size.Y * (BoardLayoutSpec.RowFractions[1] - BoardLayoutSpec.RowFractions[0]) * _assets!.CellFill / 4f;
+
+    private float CoinPixelsPerMeter()
+    {
+        var coin = _assets!.Coin;
+        return CoinDiameter() / System.Math.Max(coin.Width, coin.Height);
+    }
+
+    private void RenderCoins()
+    {
+        var viewport = GetViewportRect().Size;
+        float diameter = CoinDiameter();
+        float left = viewport.X * BoardLayoutSpec.ColumnFractions[^1];
+        float width = viewport.X - left;
+        float step = (width - diameter) / (MaxCoinsShown - 1);
+        var (geometry, fill, stroke) = _assets!.CoinArt;
+        int shown = System.Math.Min(_view.OwnCoins, MaxCoinsShown);
+        for (int i = 0; i < MaxCoinsShown; i++)
+        {
+            var view = _coins[i];
+            view.Visible = i < shown;
+            if (!view.Visible)
+            {
+                continue;
+            }
+
+            // The coin's pivot is its centre; AssetView puts the pivot at the
+            // bottom centre, so the control is placed half a coin lower.
+            view.Position = new Vector2(left + i * step, -diameter / 2f);
+            view.Size = new Vector2(diameter, diameter);
+            view.Display(geometry, part => part.Kind == AssetPartKind.Fill ? fill : stroke);
+        }
     }
 
     private void BuildDebugText()

@@ -6,6 +6,10 @@
   "ability_name_keys": [
     "burn"
   ],
+  "attack": {
+    "range": 1,
+    "pattern": "single"
+  },
   "tiers": [
     {
       "cost": 2,

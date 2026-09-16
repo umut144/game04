@@ -21,4 +21,6 @@ public sealed class BoardState
     };
 
     internal void Place(CardInstance card) => _units[card.Id] = card;
+
+    internal void Remove(CardInstance card) => _units.Remove(card.Id);
 }

@@ -13,6 +13,9 @@ public sealed class PlayerZones
     public Zone Destroyed { get; }
     public ManaPool Mana { get; } = new();
 
+    /// <summary>Coins are kept across rounds (§10).</summary>
+    public int Coins { get; internal set; }
+
     public const int HandLimit = 8;
 
     public PlayerZones(PlayerId owner)
