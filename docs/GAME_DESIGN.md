@@ -634,8 +634,8 @@ How a unit attack is carried out, decided in G05 (`docs/TASKS.md`, `G05-01` to
   the neighbours, for one — the result is rounded **down**. This is a design
   principle, not a Cleave detail.
 - **Arcane refund:** at most 1 mana per attack, however many units the attack
-  destroyed (G05's reading of "kills something", §8.2).
-- Status effects (Stun, Burn, Poison) and the Bard's support wait for G07; G05
+  destroyed (G05's reading of "kills something", §8.2, confirmed).
+- Status effects (Stun, Burn, Poison) and the Bard's support (healing) wait for G07; G05
   deals damage only.
 
 ## 9. Status effects
