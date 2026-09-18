@@ -48,7 +48,7 @@ public sealed class CardPlaySystemTests
         var played = Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, command));
 
         Assert.Equal(4, played.ManaPaid);
-        Assert.Equal(3, Active(world).Mana.Current);
+        Assert.Equal(6, Active(world).Mana.Current);
         Assert.Equal(3, Active(world).Hand.Cards.Count);
         Assert.Equal(command.Card, ActiveSide(world).OccupantOf(5));
         Assert.Equal(3, world.Board.Units[command.Card].Tier);
@@ -59,14 +59,15 @@ public sealed class CardPlaySystemTests
     {
         var world = NewWorld();
         Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 3, 1)));
-        Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 2, 2)));
+        Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 3, 2)));
+        Assert.Equal(2, Active(world).Mana.Current);
         string before = WorldStateDumper.Dump(world);
 
-        var result = CardPlaySystem.Apply(world, Catalog, Play(world, 0, 2, 3));
+        var result = CardPlaySystem.Apply(world, Catalog, Play(world, 0, 3, 3));
 
-        Assert.Contains("costs 2 mana, 1 available", Assert.IsType<CommandRejectedEvent>(result).Reason);
+        Assert.Contains("costs 4 mana, 2 available", Assert.IsType<CommandRejectedEvent>(result).Reason);
         Assert.Equal(before, WorldStateDumper.Dump(world));
-        Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 1, 3)));
+        Assert.IsType<UnitPlayedEvent>(CardPlaySystem.Apply(world, Catalog, Play(world, 0, 2, 3)));
         Assert.Equal(0, Active(world).Mana.Current);
     }
 
@@ -108,7 +109,7 @@ public sealed class CardPlaySystemTests
         var refilled = Assert.IsType<ManaRefilledEvent>(
             CardPlaySystem.Apply(world, new RefillManaCommand { Player = world.Turn.ActivePlayer }));
 
-        Assert.Equal(7, refilled.Mana);
-        Assert.Equal(7, Active(world).Mana.Current);
+        Assert.Equal(10, refilled.Mana);
+        Assert.Equal(10, Active(world).Mana.Current);
     }
 }

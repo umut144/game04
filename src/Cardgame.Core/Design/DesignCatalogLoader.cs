@@ -15,7 +15,7 @@ public static class DesignCatalogLoader
     private const int SupportedCardSchemaVersion = 1;
     private const int SupportedAbilitySchemaVersion = 1;
     private const int RequiredTierCount = 3;
-    public const int MaximumCornerValue = 9;
+    public const int MaximumCornerValue = 12;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -211,7 +211,7 @@ public static class DesignCatalogLoader
                 Id = design.Id,
                 Type = design.Type,
                 AssetKey = design.AssetKey,
-                Attack = design.Attack is { } profile ? new AttackProfile(profile.Range, profile.Pattern) : null,
+                Attack = design.Attack is { } profile ? new AttackProfile(profile.Range, profile.Pattern, profile.TotemPattern) : null,
                 AbilityNameKeys = design.AbilityNameKeys,
                 Tiers = design.Tiers
                     .Select(tier => new CardTier

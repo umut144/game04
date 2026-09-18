@@ -16,6 +16,11 @@ public static class CardPlaySystem
 {
     public static IEvent Apply(WorldState world, CardCatalog catalog, PlayUnitCommand command)
     {
+        if (world.Outcome is not null)
+        {
+            return Rejected(command, "the match is over");
+        }
+
         if (command.Player != world.Turn.ActivePlayer)
         {
             return Rejected(command, $"it is {world.Turn.ActivePlayer}'s turn");

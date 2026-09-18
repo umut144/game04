@@ -64,10 +64,11 @@ public sealed class RepositoryAssetsTests
 
         var window = CardFigureFit.WindowOf(card);
 
-        // PolyTools: glyph01 wedges end 0.15 m in from the 0.3 m half-width
-        // and 0.15 m in from the 0.45 m half-height; scaled by 1.12 and 16/15.
-        Assert.Equal(0.168f, window.InnerHalfWidth, 3);
-        Assert.Equal(0.32f, window.InnerHalfHeight, 3);
+        // PolyTools: the glyph01 wedges — the largest of the four bands since
+        // VALUE-12 — end 0.2 m in from the 0.3 m half-width and 0.2 m in from
+        // the 0.45 m half-height; scaled by 1.12 and 16/15.
+        Assert.Equal(0.112f, window.InnerHalfWidth, 3);
+        Assert.Equal(0.2667f, window.InnerHalfHeight, 3);
         Assert.Equal(0.336f, window.HalfWidth, 3);
         Assert.Equal(0.48f, window.HalfHeight, 3);
     }

@@ -13,6 +13,11 @@ public sealed class PlayerZones
     public Zone Destroyed { get; }
     public ManaPool Mana { get; } = new();
 
+    /// <summary>The owner's Totem of Life (§5.1) and Totem of Time (§5.3).</summary>
+    public LifeTotem Life { get; } = new();
+
+    public TimePool Time { get; } = new();
+
     /// <summary>Coins are kept across rounds (§10).</summary>
     public int Coins { get; internal set; }
 

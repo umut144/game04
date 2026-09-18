@@ -8,26 +8,27 @@
   ],
   "attack": {
     "range": 3,
-    "pattern": "double_hit"
+    "pattern": "double_hit",
+    "totem_pattern": "single"
   },
   "tiers": [
     {
-      "cost": 2,
+      "cost": 3,
       "bounty": 1,
-      "attack": 2,
-      "health": 2
-    },
-    {
-      "cost": 4,
-      "bounty": 2,
       "attack": 3,
       "health": 3
     },
     {
-      "cost": 6,
-      "bounty": 4,
+      "cost": 5,
+      "bounty": 3,
       "attack": 4,
       "health": 4
+    },
+    {
+      "cost": 8,
+      "bounty": 5,
+      "attack": 5,
+      "health": 5
     }
   ]
 }

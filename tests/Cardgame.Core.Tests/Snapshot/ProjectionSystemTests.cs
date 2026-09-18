@@ -46,8 +46,12 @@ public sealed class ProjectionSystemTests
 
         Assert.True(view.IsOwnTurn);
         Assert.Equal(1, view.Round);
-        Assert.Equal(20, view.BaseSeconds);
-        Assert.Equal(10, view.BonusSeconds);
+        Assert.Equal(34, view.MaxSeconds);
+        Assert.Equal(34, view.OwnSeconds);
+        Assert.Equal(34, view.OpponentSeconds);
+        Assert.Equal(14, view.OwnLife);
+        Assert.Equal(14, view.MaxLife);
+        Assert.Null(view.Outcome);
         Assert.Equal(4, view.OwnHandCount);
         Assert.Equal(world.Zones(viewer).Hand.Cards.Select(card => card.Id), view.OwnHandCards);
         Assert.Equal(6, view.OwnDeckCount);
@@ -56,8 +60,8 @@ public sealed class ProjectionSystemTests
         Assert.All(view.OwnHandCards, id => Assert.True(view.Cards.ContainsKey(id)));
         Assert.All(world.Zones(opponent).Hand.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
         Assert.All(world.Zones(viewer).Deck.Cards, card => Assert.False(view.Cards.ContainsKey(card.Id)));
-        Assert.Equal(7, view.OwnMana);
-        Assert.Equal(7, view.OpponentMaxMana);
+        Assert.Equal(10, view.OwnMana);
+        Assert.Equal(10, view.OpponentMaxMana);
         Assert.False(ProjectionSystem.Project(world, opponent).IsOwnTurn);
     }
 
@@ -96,7 +100,7 @@ public sealed class ProjectionSystemTests
         Assert.Null(view.OwnBoard.UnitSlots[2]);
         Assert.Equal(totemsBefore, view.OwnBoard.Totems);
         Assert.Equal(handBefore, view.OwnHandCards);
-        Assert.Equal(7, view.OwnMana);
+        Assert.Equal(10, view.OwnMana);
         Assert.True(view.IsOwnTurn);
     }
 }

@@ -5,4 +5,7 @@ public static class Abilities
 {
     /// <summary>May attack in the turn it is played (§7.4).</summary>
     public const string Rush = "rush";
+
+    /// <summary>Ignores totem protection through the slot in front (§4.1).</summary>
+    public const string Bypass = "bypass";
 }

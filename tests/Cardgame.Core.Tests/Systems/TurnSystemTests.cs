@@ -95,34 +95,38 @@ public sealed class TurnSystemTests
             Tier = 3,
             Slot = 1,
         });
-        Assert.Equal(4, world.Zones(starter).Mana.Current);
+        Assert.Equal(7, world.Zones(starter).Mana.Current);
 
         EndTurn(world);
-        Assert.Equal(7, world.Zones(PlayerIds.Opponent(starter)).Mana.Current);
+        Assert.Equal(10, world.Zones(PlayerIds.Opponent(starter)).Mana.Current);
         EndTurn(world);
-        Assert.Equal(7, world.Zones(starter).Mana.Current);
+        Assert.Equal(10, world.Zones(starter).Mana.Current);
     }
 
     [Fact]
-    public void ConstructedGrowsManaByOnePerRoundUpToSevenAndDropsWhatIsLeft()
+    public void ConstructedGrowsManaByOnePerRoundUpToTheMaximumAndDropsWhatIsLeft()
     {
         var world = NewWorld(MatchMode.Constructed);
         var starter = world.Turn.StartingPlayer;
         var second = PlayerIds.Opponent(starter);
+        // Both are paid for their first turn at setup (G06-02).
         Assert.Equal(1, world.Zones(starter).Mana.Current);
-        Assert.Equal(0, world.Zones(second).Mana.Current);
+        Assert.Equal(1, world.Zones(second).Mana.Current);
 
         var seen = new List<int>();
-        for (int round = 1; round <= 9; round++)
+        for (int round = 1; round <= 12; round++)
         {
+            // Keep the quiet-round counter fresh: the draw after eight quiet
+            // rounds is G06-05's rule and has its own test.
+            world.Turn.LastLifeDamageRound = world.Turn.Round;
             Assert.Equal(round, world.Turn.Round);
             seen.Add(world.Zones(starter).Mana.Current);
             EndTurn(world);
-            Assert.Equal(Math.Min(round, 7), world.Zones(second).Mana.Current);
+            Assert.Equal(Math.Min(round, 10), world.Zones(second).Mana.Current);
             EndTurn(world);
         }
 
-        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 7, 7 }, seen);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10 }, seen);
     }
 
     [Fact]

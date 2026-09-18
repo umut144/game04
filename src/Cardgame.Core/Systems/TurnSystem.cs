@@ -6,16 +6,29 @@ using Cardgame.Core.Model;
 using Cardgame.Core.Zones;
 
 /// <summary>
-/// The round loop (§6, G04). Turns alternate; a round is both players having
-/// had one. At the start of a turn the active player's mana is set — the
-/// maximum in the mirror modes, the round number up to the maximum in
-/// Constructed, unspent mana lost either way (G04-01) — and they draw one card
+/// The round loop (§6, G04, G06). Turns alternate; a round is both players
+/// having had one. At the start of a turn the active player draws one card
 /// unless their hand is at the limit or their deck is empty (G04-02).
+///
+/// Mana and time are refilled when a player *ends* their turn (G06-02): the
+/// maximum in the mirror modes, the round of their next turn up to the
+/// maximum in Constructed, unspent mana lost either way. Both totems
+/// therefore stand full through the opponent's turn, which is what makes
+/// attacking them worth anything. Eight rounds without damage to a Totem of
+/// Life end the match in a draw (§5.1).
 /// </summary>
 public static class TurnSystem
 {
+    /// <summary>Rounds without damage to a Totem of Life that end in a draw (G06-05).</summary>
+    public const int DrawAfterQuietRounds = 8;
+
     public static IEvent Apply(WorldState world, EndTurnCommand command)
     {
+        if (world.Outcome is not null)
+        {
+            return Rejected(command, "the match is over");
+        }
+
         if (world.Turn.Round == 0)
         {
             return Rejected(command, "the match has not started");
@@ -26,9 +39,19 @@ public static class TurnSystem
             return Rejected(command, $"it is {world.Turn.ActivePlayer}'s turn");
         }
 
+        Refill(world, command.Player);
+
         var next = PlayerIds.Opponent(command.Player);
         if (next == world.Turn.StartingPlayer)
         {
+            if (world.Turn.Round - world.Turn.LastLifeDamageRound >= DrawAfterQuietRounds)
+            {
+                var outcome = new MatchOutcome(
+                    null, $"{DrawAfterQuietRounds} rounds without damage to a Totem of Life");
+                world.Outcome = outcome;
+                return new MatchEndedEvent { Outcome = outcome };
+            }
+
             world.Turn.Round++;
         }
 
@@ -48,11 +71,6 @@ public static class TurnSystem
         }
 
         var zones = world.Zones(player);
-        int mana = world.MatchMode.IsMirror()
-            ? zones.Mana.Maximum
-            : Math.Min(world.Turn.Round, zones.Mana.Maximum);
-        zones.Mana.Set(mana);
-
         CardInstance? drawn = null;
         if (zones.Hand.Cards.Count < PlayerZones.HandLimit)
         {
@@ -70,6 +88,20 @@ public static class TurnSystem
             Mana = zones.Mana.Current,
             Drawn = drawn?.Id,
         };
+    }
+
+    /// <summary>
+    /// Refills a player's mana and time as their turn ends, for the turn they
+    /// will have next: in Constructed that is the round after this one, since
+    /// both players' next turns fall in it (G06-02).
+    /// </summary>
+    internal static void Refill(WorldState world, PlayerId player)
+    {
+        var zones = world.Zones(player);
+        zones.Mana.RefillTo(world.MatchMode.IsMirror()
+            ? zones.Mana.Maximum
+            : Math.Min(world.Turn.Round + 1, zones.Mana.Maximum));
+        zones.Time.Refill();
     }
 
     private static CommandRejectedEvent Rejected(ICommand command, string reason) =>

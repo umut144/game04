@@ -103,8 +103,8 @@ public sealed class MatchSetupSystemTests
         Assert.Equal(7, other.Deck.Cards.Count);
         Assert.Equal(starter.Hand.Cards[3].Id, setUp.FirstTurn.Drawn);
         Assert.All(starter.Hand.Cards, card => Assert.Null(card.Tier));
-        Assert.Equal(7, world.PlayerA.Mana.Current);
-        Assert.Equal(7, world.PlayerB.Mana.Current);
+        Assert.Equal(10, world.PlayerA.Mana.Current);
+        Assert.Equal(10, world.PlayerB.Mana.Current);
     }
 
     [Fact]

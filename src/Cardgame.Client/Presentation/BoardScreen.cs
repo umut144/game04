@@ -21,13 +21,14 @@ namespace Cardgame.Client.Presentation;
 /// The own hand sits in the left margin as two banks of four cards, one shown
 /// at a time (Q). Playing a unit: click a hand card, click a free own slot,
 /// then pick the tier with 1, 2 or 3 (<see cref="TierPicker"/>). The mana
-/// totem's segments show the mana left; the time totem drains through its
-/// segments, base time first, then — after a flip — bonus time. Clicking the
-/// own time totem or pressing Tab ends the turn.
+/// totem's segments show the mana left, the life totem's the health left, and
+/// the time totem drains through its segments over the 34 seconds the turn
+/// has. Clicking the own time totem or pressing Tab ends the turn.
 ///
-/// Attacking (G05): click an own unit that may attack; the fields it can aim
-/// at get a red attack frame, hovering one shows what the attack would hit,
-/// clicking it attacks. A pattern without a target frames every field it hits.
+/// Attacking (G05, G06): click an own unit that may attack; the fields and
+/// unprotected totems it can aim at get a red attack frame, hovering one shows
+/// what the attack would hit, clicking it attacks. A pattern without a target
+/// frames every field it hits.
 /// Coins are a strip at the top of the right margin.
 ///
 /// Dev bootstrap: there is no server yet, so this node holds the world,
@@ -51,6 +52,7 @@ public partial class BoardScreen : Control
     private static readonly Color OpponentSlotFill = new(0.22f, 0.14f, 0.17f);
     private static readonly Color SelectedSlotBorder = new("E3B341");
     private static readonly Color DimText = new(0.55f, 0.60f, 0.57f);
+    private static readonly Color ManaDebtColour = new("D64545");
 
     private readonly Dictionary<(int Row, int Slot), CardControl> _slotCards = new();
     private readonly Dictionary<(int Row, int Slot), Panel> _slotCells = new();
@@ -63,7 +65,6 @@ public partial class BoardScreen : Control
     private PlayerId _viewer = PlayerId.PlayerA;
     private double _elapsed;
     private bool _paused;
-    private bool _inBonus;
     private readonly Dictionary<(int Row, TotemPosition Position), AssetView> _totemMasks = new();
     private readonly Dictionary<(int Row, TotemPosition Position), Control> _totemCells = new();
     private (int Row, TotemPosition Position)? _activeTimeTotem;
@@ -79,13 +80,16 @@ public partial class BoardScreen : Control
     private string _lastMessage = string.Empty;
     private int? _attackerSlot;
     private FieldRef? _hovered;
+    private TotemRef? _hoveredTotem;
     private readonly Dictionary<(int Row, int Slot), AttackFrame> _frames = new();
+    private readonly Dictionary<(int Row, TotemPosition Position), AttackFrame> _totemFrames = new();
     private readonly List<AssetView> _coins = new();
     private const int MaxCoinsShown = 20;
 
     private Control _root = null!;
     private CardControl _deck = null!;
     private Label _debugText = null!;
+    private Label _outcomeText = null!;
     private Label _error = null!;
     private TierPicker _picker = null!;
 
@@ -116,6 +120,7 @@ public partial class BoardScreen : Control
         BuildHand();
         BuildDeck();
         BuildDebugText();
+        BuildOutcomeText();
         BuildCoins();
 
         _picker = new TierPicker();
@@ -206,17 +211,16 @@ public partial class BoardScreen : Control
             return;
         }
 
-        _elapsed += delta;
-        var clock = _world.Clock;
-        if (!_inBonus && _elapsed >= clock.BaseSeconds)
+        if (_world.Outcome is not null)
         {
-            _inBonus = true;
-            FlipActiveTimeTotem();
-            Refresh();
+            return;
         }
 
-        if (_elapsed >= clock.TotalSeconds)
+        _elapsed += delta;
+        if (_elapsed >= TurnSeconds)
         {
+            // A Totem of Time beaten to 0 gives its owner a turn that is over
+            // as it begins — they still draw and still refill (§8.6).
             EndTurn(timedOut: true);
             return;
         }
@@ -224,16 +228,15 @@ public partial class BoardScreen : Control
         UpdateTimeTotem();
     }
 
-    private void StartClock()
-    {
-        _elapsed = 0;
-        _inBonus = false;
-    }
+    private void StartClock() => _elapsed = 0;
+
+    /// <summary>The seconds the active player's Totem of Time grants this turn.</summary>
+    private int TurnSeconds => _world.Zones(_world.Turn.ActivePlayer).Time.Seconds;
 
     private void EndTurn(bool timedOut)
     {
         var result = TurnSystem.Apply(_world, new EndTurnCommand { Player = _world.Turn.ActivePlayer, TimedOut = timedOut });
-        if (result is TurnStartedEvent)
+        if (result is TurnStartedEvent or MatchEndedEvent)
         {
             ClearSelection();
             _bank = 0;
@@ -252,26 +255,10 @@ public partial class BoardScreen : Control
             return;
         }
 
-        var clock = _world.Clock;
-        double left = _inBonus
-            ? 1 - (_elapsed - clock.BaseSeconds) / clock.BonusSeconds
-            : 1 - _elapsed / clock.BaseSeconds;
+        int seconds = TurnSeconds;
+        double left = seconds <= 0 ? 0 : 1 - _elapsed / seconds;
         float cutoff = _segmentBottom + (float)System.Math.Clamp(left, 0, 1) * (_segmentTop - _segmentBottom);
         ((ShaderMaterial)_totemMasks[key].Material).SetShaderParameter("cutoff", cutoff);
-    }
-
-    private void FlipActiveTimeTotem()
-    {
-        if (_activeTimeTotem is not { } key)
-        {
-            return;
-        }
-
-        var cell = _totemCells[key];
-        cell.PivotOffset = cell.Size / 2;
-        var tween = CreateTween();
-        tween.TweenProperty(cell, "scale", new Vector2(1f, 0f), 0.18f);
-        tween.TweenProperty(cell, "scale", Vector2.One, 0.18f);
     }
 
     private void ClearSelection()
@@ -280,6 +267,7 @@ public partial class BoardScreen : Control
         _selectedSlot = null;
         _attackerSlot = null;
         _hovered = null;
+        _hoveredTotem = null;
         _picker?.Close();
     }
 
@@ -304,7 +292,22 @@ public partial class BoardScreen : Control
             && _view.OwnBoard.Totems.Any(t => t.Position == position && t.Type == TotemType.Time))
         {
             EndTurn(timedOut: false);
+            return;
         }
+
+        var totem = new TotemRef(row == OwnRow ? _viewer : PlayerIds.Opponent(_viewer), position);
+        if (_attackerSlot is int attacker && AttackTotems().Contains(totem))
+        {
+            AttackTotem(attacker, totem);
+        }
+    }
+
+    private void OnTotemHovered(int row, TotemPosition position, bool entered)
+    {
+        _hoveredTotem = entered
+            ? new TotemRef(row == OwnRow ? _viewer : PlayerIds.Opponent(_viewer), position)
+            : null;
+        RenderAttackFrames();
     }
 
     private FieldRef FieldOf(int row, int slot) => new(row == OwnRow ? _viewer : PlayerIds.Opponent(_viewer), slot);
@@ -371,6 +374,39 @@ public partial class BoardScreen : Control
             : CombatRules.Targets(_world, _assets.Catalog, _viewer, slot);
     }
 
+    // The opposing totems the selected attacker may aim at (§4, §8.1.1).
+    private IReadOnlyList<TotemRef> AttackTotems() =>
+        _attackerSlot is int slot
+            ? CombatRules.TotemTargets(_world, _assets!.Catalog, _viewer, slot)
+            : System.Array.Empty<TotemRef>();
+
+    private void AttackTotem(int attackerSlot, TotemRef totem)
+    {
+        var before = _view;
+        var result = CombatSystem.Apply(_world, _assets!.Catalog, new AttackCommand
+        {
+            Player = _viewer,
+            AttackerSlot = attackerSlot,
+            TotemTarget = totem,
+        });
+
+        if (result is UnitAttackedEvent attacked)
+        {
+            _attackerSlot = null;
+            _hovered = null;
+            _hoveredTotem = null;
+            if (attacked.TurnEnded is not null)
+            {
+                _bank = 0;
+                StartClock();
+            }
+
+            PlayAttack(before, attacked);
+        }
+
+        Apply(result);
+    }
+
     private void Attack(int attackerSlot, FieldRef target)
     {
         var profile = CombatRules.ProfileOf(_world, _assets!.Catalog, _viewer, attackerSlot);
@@ -398,7 +434,9 @@ public partial class BoardScreen : Control
     {
         var attackerCell = _slotCells[(OwnRow, attacked.AttackerSlot)];
         var card = _slotCards[(OwnRow, attacked.AttackerSlot)];
-        var aim = attacked.Target is { } target ? _slotCells[(RowOf(target.Side), target.Slot)] : attackerCell;
+        Control aim = attacked.Target is { } target ? _slotCells[(RowOf(target.Side), target.Slot)]
+            : attacked.TotemTarget is { } totem ? _totemCells[(RowOf(totem.Side), totem.Position)]
+            : attackerCell;
         var lunge = (aim.GlobalPosition - attackerCell.GlobalPosition).LimitLength(1f) * 40f;
         var tween = CreateTween();
         tween.TweenProperty(card, "position", lunge, 0.08f);
@@ -422,6 +460,14 @@ public partial class BoardScreen : Control
                 fade.TweenCallback(Callable.From(ghost.QueueFree));
             }
         }
+
+        foreach (var hit in attacked.TotemHits)
+        {
+            var cell = _totemCells[(RowOf(hit.Totem.Side), hit.Totem.Position)];
+            var flash = CreateTween();
+            flash.TweenProperty(cell, "modulate", new Color(1f, 0.45f, 0.45f), 0.08f);
+            flash.TweenProperty(cell, "modulate", Colors.White, 0.35f);
+        }
     }
 
     private void OnSlotHovered(int row, int slot, bool entered)
@@ -438,13 +484,42 @@ public partial class BoardScreen : Control
             frame.Affected = false;
         }
 
+        foreach (var frame in _totemFrames.Values)
+        {
+            frame.Visible = false;
+            frame.Affected = false;
+        }
+
         var fields = AttackFields();
         foreach (var field in fields)
         {
             _frames[(RowOf(field.Side), field.Slot)].Visible = true;
         }
 
-        if (_attackerSlot is not int slot || _hovered is not { } hovered || !fields.Contains(hovered))
+        var totems = AttackTotems();
+        foreach (var totem in totems)
+        {
+            _totemFrames[(RowOf(totem.Side), totem.Position)].Visible = true;
+        }
+
+        if (_attackerSlot is not int slot)
+        {
+            return;
+        }
+
+        if (_hoveredTotem is { } hoveredTotem && totems.Contains(hoveredTotem))
+        {
+            foreach (var (totem, _, _) in CombatRules.AffectedTotems(_world, _assets!.Catalog, _viewer, slot, hoveredTotem))
+            {
+                var frame = _totemFrames[(RowOf(totem.Side), totem.Position)];
+                frame.Visible = true;
+                frame.Affected = true;
+            }
+
+            return;
+        }
+
+        if (_hovered is not { } hovered || !fields.Contains(hovered))
         {
             return;
         }
@@ -502,8 +577,10 @@ public partial class BoardScreen : Control
             _bank = 0;
         }
 
-        RenderSide(OwnRow, _view.OwnBoard, _view.OwnMana);
-        RenderSide(OpponentRow, _view.OpponentBoard, _view.OpponentMana);
+        RenderSide(OwnRow, _view.OwnBoard, _view.OwnMana, _view.OwnManaDebt, _view.OwnLife, _view.OwnSeconds);
+        RenderSide(
+            OpponentRow, _view.OpponentBoard, _view.OpponentMana, _view.OpponentManaDebt,
+            _view.OpponentLife, _view.OpponentSeconds);
 
         for (int i = 0; i < BankSize; i++)
         {
@@ -531,20 +608,31 @@ public partial class BoardScreen : Control
 
         RenderAttackFrames();
         RenderCoins();
+        _outcomeText.Visible = _view.Outcome is not null;
+        if (_view.Outcome is { } outcome)
+        {
+            _outcomeText.Text = outcome.IsDraw
+                ? $"Draw — {outcome.Reason}\nR: new match"
+                : $"{outcome.Winner} wins — {outcome.Reason}\nR: new match";
+        }
+
         _debugText.Visible = _debug;
         _debugText.Text =
             $"{_viewer} · round {_view.Round} · seed {_seed} · {_matchMode}\n" +
-            $"clock {(_inBonus ? "bonus" : "base")} {_elapsed:0.0}s of {_view.BaseSeconds}+{_view.BonusSeconds}{(_paused ? " · PAUSED" : string.Empty)}\n" +
-            $"own: mana {_view.OwnMana}/{_view.OwnMaxMana}, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2\n" +
-            $"own coins {_view.OwnCoins}, opponent: mana {_view.OpponentMana}/{_view.OpponentMaxMana}, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}, coins {_view.OpponentCoins}\n\n" +
-            "click own unit → framed target: attack\n" +
+            $"clock {_elapsed:0.0}s of {_view.OwnSeconds}{(_paused ? " · PAUSED" : string.Empty)} · " +
+            $"quiet rounds {_view.Round - _world.Turn.LastLifeDamageRound}/{TurnSystem.DrawAfterQuietRounds}\n" +
+            $"own: life {_view.OwnLife}/{_view.MaxLife}, mana {_view.OwnMana}/{_view.OwnMaxMana} (owed {_view.OwnManaDebt}), " +
+            $"time {_view.OwnSeconds}s, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2, coins {_view.OwnCoins}\n" +
+            $"opponent: life {_view.OpponentLife}/{_view.MaxLife}, mana {_view.OpponentMana}/{_view.OpponentMaxMana} (owed {_view.OpponentManaDebt}), " +
+            $"time {_view.OpponentSeconds}s, hand {_view.OpponentHandCount}, deck {_view.OpponentDeckCount}, coins {_view.OpponentCoins}\n\n" +
+            "click own unit → framed unit or totem: attack\n" +
             "click hand card → free slot → 1/2/3\n" +
             "Tab or click own time totem: end turn\n" +
             "Q bank · P pause · F refill mana\nR new match · M mode · D overlay · Esc cancel\n\n" +
             _lastMessage;
     }
 
-    private void RenderSide(int row, BoardSideView board, int mana)
+    private void RenderSide(int row, BoardSideView board, int mana, int manaDebt, int life, int seconds)
     {
         for (int slot = BoardGeometry.FirstSlot; slot <= BoardGeometry.LastSlot; slot++)
         {
@@ -570,7 +658,6 @@ public partial class BoardScreen : Control
             var (geometry, fill, stroke) = _assets!.Totem(placement.Type);
             var lit = stroke.Lightened(0.3f);
             var key = (row, placement.Position);
-            bool isMana = placement.Type == TotemType.Mana;
             _totems[key].Display(geometry, part =>
             {
                 if (part.Kind == AssetPartKind.Stroke)
@@ -578,7 +665,20 @@ public partial class BoardScreen : Control
                     return stroke;
                 }
 
-                return isMana && SegmentNumber(part.ComponentName) is int n && n <= mana ? lit : fill;
+                if (SegmentNumber(part.ComponentName) is not int n)
+                {
+                    return fill;
+                }
+
+                // Mana counts up from segment01 and is taken off the top;
+                // mana that is owed turns the lowest segments red (§5.2).
+                // A Totem of Life's lost segments fade to a faint red (§5.1).
+                return placement.Type switch
+                {
+                    TotemType.Mana => n <= manaDebt ? ManaDebtColour : n <= mana ? lit : fill,
+                    TotemType.Life => n <= life ? lit : fill.Lerp(stroke, 0.18f),
+                    _ => fill,
+                };
             });
 
             var mask = _totemMasks[key];
@@ -591,8 +691,7 @@ public partial class BoardScreen : Control
             // The segments are the mask the remaining time shows through.
             var segments = geometry.Where(part => part.Kind == AssetPartKind.Fill && SegmentNumber(part.ComponentName) is not null);
             bool running = row == OwnRow;
-            var colour = running && _inBonus ? stroke.Darkened(0.12f) : lit;
-            mask.Display(segments, _ => colour);
+            mask.Display(segments, _ => lit);
             if (running)
             {
                 _activeTimeTotem = key;
@@ -602,7 +701,11 @@ public partial class BoardScreen : Control
             }
             else
             {
-                ((ShaderMaterial)mask.Material).SetShaderParameter("cutoff", 1000f);
+                // The waiting player's totem shows the seconds their next turn
+                // still has: what an attack on it took is missing from the top.
+                float left = _view.MaxSeconds > 0 ? seconds / (float)_view.MaxSeconds : 0f;
+                ((ShaderMaterial)mask.Material).SetShaderParameter(
+                    "cutoff", segments.MinY + System.Math.Clamp(left, 0f, 1f) * (segments.MaxY - segments.MinY));
             }
         }
     }
@@ -680,7 +783,14 @@ public partial class BoardScreen : Control
             _totemMasks[(row, position)] = mask;
             _totemCells[(row, position)] = cell;
 
+            var frame = new AttackFrame();
+            CardControl.Fill(frame);
+            cell.AddChild(frame);
+            _totemFrames[(row, position)] = frame;
+
             cell.MouseFilter = MouseFilterEnum.Stop;
+            cell.MouseEntered += () => OnTotemHovered(row, position, true);
+            cell.MouseExited += () => OnTotemHovered(row, position, false);
             cell.GuiInput += @event =>
             {
                 if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
@@ -761,6 +871,15 @@ public partial class BoardScreen : Control
             view.Size = new Vector2(diameter, diameter);
             view.Display(geometry, part => part.Kind == AssetPartKind.Fill ? fill : stroke);
         }
+    }
+
+    // The match's end, shown over the board; R starts the next one.
+    private void BuildOutcomeText()
+    {
+        _outcomeText = MakeLabel(string.Empty, 54, new Color("F5F2E8"));
+        Place(_outcomeText, 0f, 0.42f, 1f, 0.58f);
+        _outcomeText.Visible = false;
+        _root.AddChild(_outcomeText);
     }
 
     private void BuildDebugText()

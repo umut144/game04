@@ -147,47 +147,73 @@ and they are simultaneously the player's **HUD**: a totem does not display a
 resource next to itself, it *is* the display. Damaging a totem visibly
 shortens the thing the player reads their own state from.
 
-The Totems of Life and Mana are each built as a body plus **7 segments**; the
-Totem of Time has **8** — deliberately, for now, set against the other two.
-**EXPERIMENTAL** — the
+The Totem of Life is built as a body plus **14 segments**, the Totem of Mana
+plus **10** and the Totem of Time plus **8**. Each segment of Life is one
+health step and each segment of Mana one mana point, so the totem is the
+resource, counted; the Totem of Time is a continuous drain and its segments are
+only the mask it shows through. **EXPERIMENTAL** — the
 presentation of all three totems needs testing, especially in combination with
 Mastery Stats.
 
 ### 5.1 Totem of Life — the win condition
 
 Destroying the opponent's Totem of Life wins the match. Each segment is one HP
-step; base total is 7. Health Mastery adds 2 HP for its first point (§12).
+step, so the base total is **14**. Health Mastery adds 2 HP for its first
+point (§12), which is the one case where a segment has to carry more than one
+step — how, is open (§15).
 
-Higher HP does not add segments, it makes each segment carry more steps, shown
-by a stronger colour. A segment then darkens through its colour stages as it
-takes damage — dark red → red → grey — until it is spent.
+Health counts up from `segment01`; damage takes the highest standing segment
+first. A lost segment does not turn a different colour, it **fades**, leaving
+only a very faint red where it stood.
+
+A match can also end without a Totem of Life falling: **eight rounds in which
+no Totem of Life takes damage end it in a draw**, counted from the first round
+and reset by any damage to either one. Without it a board that neither side can
+break through has no end (G06-05).
 
 ### 5.2 Totem of Mana
 
-The 7 segments glow blue, one per available mana point. Spending mana
-extinguishes segments to grey; the round refills them. Damage to the totem
-reduces what the round can refill, and keeps reducing it until the totem is
-healed.
+The 10 segments glow blue, one per available mana point, counting up from
+`segment01`. Spending mana extinguishes segments from the top down; **the pool
+is refilled when its owner ends their turn**, not when their next turn begins
+(G06-02). That is what makes the totem worth attacking: it stands full through
+the opponent's whole turn.
 
-Maximum mana is **7**, and **8** with the third Mana Mastery point. How an
-eighth point is shown on a seven-segment totem is an open presentation
+An attack on the Totem of Mana costs exactly **one mana per hit**, whatever the
+attacker's attack value — a double hit costs two. The totem has no health of
+its own and cannot be destroyed; it is as if it carried Protect forever, and
+paid for it in mana.
+
+A hit on an empty pool leaves **mana owed** instead: a red segment, filling up
+from `segment01`. What is owed is missing from the next refill and is then paid
+off — a player who would receive 5 mana with 2 red segments starts their turn
+with 3.
+
+Maximum mana is **10**, and **11** with the third Mana Mastery point. How an
+eleventh point is shown on a ten-segment totem is an open presentation
 question (§15).
 
 ### 5.3 Totem of Time
 
 The colour drains from top to bottom like an hourglass. The segments are the
 mask it shows through: the fill level moves continuously, so a segment can be
-partly filled. A turn has **20 seconds
-of base time and 10 seconds of bonus time**, fresh every turn. When the base time is spent, the
-totem flips and the bonus time runs down in a more intense colour.
+partly filled. A turn has **34 seconds**, in one piece — there is no base time,
+no bonus time and no floor (G06-03). Like the mana pool, the seconds are
+refilled when their owner ends their turn, so the totem stands full through the
+opponent's turn.
 
-Only the **bonus time** can be attacked. Base time is a floor and cannot be
-taken away. Damage to the Totem of Time reduces the bonus time the next round
-grants, in proportion to the segments still standing.
+An attack on the Totem of Time takes its **attack value in seconds** off that
+pool. At 0 the owner's next turn begins and ends at once: they still draw their
+card and still refill, but they do nothing else.
 
-The floor exists because this game asks more of a player's reading time than a
-normal card game does, not less: no numbers, plus a three-way tier choice on
-every card played.
+Taking more seconds than the pool holds is **overdamage, and it ends the
+attacker's own turn**. Beating the Totem of Time flat is therefore something to
+commit to deliberately and not to overdo — and since the victim then has no
+time to spend, the attacker is back on the move almost at once.
+
+The single block exists because this game asks more of a player's reading time
+than a normal card game does, not less: no numbers, plus a three-way tier
+choice on every card played.
 
 ### 5.4 Why this matters
 
@@ -200,13 +226,18 @@ healthy attacker keeps their full budget. An unhealed resource totem compounds.
 
 - **Alternating turns**, each with its own clock. A **turn** is one player's
   turn; a **round** is both players having had one turn.
-- The turn clock is 20 s base + 10 s bonus (§5.3). A turn ends when its time
-  runs out, or when the player ends it — by clicking their own Totem of Time.
-- **Mana** is set at the start of each of a player's turns:
-  - in the **mirror modes** to the maximum (7, or 8 with Mana Mastery 3) —
-    mana does not grow; a mirror match is at full budget from the first turn;
-  - in **Constructed** to the round number, up to the maximum — mana grows by
-    **1 per round**.
+- The turn clock is the 34 s the player's Totem of Time still grants (§5.3). A
+  turn ends when its time runs out, or when the player ends it — by clicking
+  their own Totem of Time.
+- **Mana and time are refilled when a player ends their turn** (G06-02), for
+  the turn they will have next. Both totems therefore stand full while the
+  opponent moves, which is what makes them worth attacking.
+  - In the **mirror modes** mana refills to the maximum (10, or 11 with Mana
+    Mastery 3) — mana does not grow; a mirror match is at full budget from the
+    first turn.
+  - In **Constructed** it refills to the round number of that next turn, up to
+    the maximum — mana grows by **1 per round**. Both players are paid for
+    their first turn at match setup.
   Unspent mana is lost when the turn ends. Mana Mastery carries 1 or 2 points
   over into the next round (§12).
 - **Starting hand is 3 cards**, dealt from the top of the shuffled deck at
@@ -238,24 +269,28 @@ The four corners carry the four values, always in the same position:
 
 ### 7.2 The value glyph system
 
-Each corner is a triangular wedge divided into **3 bands**, read together with
-**3 colour intensities**. Value = (intensity − 1) × 3 + filled bands, giving
-1 through 9. 9 is the maximum value in the game.
+Each corner is a triangular wedge divided into **4 bands**, read together with
+**3 colour intensities**. Value = (intensity − 1) × 4 + filled bands, giving
+1 through 12. 12 is the maximum value in the game (VALUE-12).
 
 ```text
-light  + 1..3 bands = 1, 2, 3    filled from band 1 towards band 3
-medium + 1..3 bands = 4, 5, 6    filled from band 3 towards band 1
-dark   + 1..3 bands = 7, 8, 9    filled from band 1 towards band 3
+light  + 1..4 bands = 1, 2, 3, 4      filled from band 1 towards band 4
+medium + 1..4 bands = 5, 6, 7, 8      filled from band 4 towards band 1
+dark   + 1..4 bands = 9, 10, 11, 12   filled from band 1 towards band 4
 ```
 
-The fill direction alternates with the intensity, so a light 2 and a medium 5
-look different even where their colours are close. In the card asset band 1
-is `glyph01` and band 3 is `glyph03`. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
+The fill direction alternates with the intensity, so a light 2 and a medium 6
+look different even where their colours are close. In the card asset band 1 is
+`glyph01`, the largest and outermost, and band 4 is `glyph04`, the small one in
+the corner. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
 so the player reads "empty" rather than "missing". Reference:
 `concepts/diegetic_examples/attack-power-example/`.
 
-This supersedes the 1–12 (3 × 4) glyph system in `cardgame-ref`. Three bands
-are quicker to count at a glance than four, and a 9-point range is enough.
+The band count went from three to four in G06: with a Totem of Life of 14 and
+a mana pool of 10, a 9-point range was too narrow at the top. That makes the
+range the same 1–12 as `cardgame-ref`'s glyph system, but the reading is
+game04's own — three intensities of four bands with an alternating fill
+direction, not `cardgame-ref`'s four of three.
 
 **The top-left wedge also carries the currency.** Most cards cost mana and are
 blue there. A card that costs **Coins** instead — the Bomb, for example — shows
@@ -638,6 +673,27 @@ How a unit attack is carried out, decided in G05 (`docs/TASKS.md`, `G05-01` to
 - Status effects (Stun, Burn, Poison) and the Bard's support (healing) wait for G07; G05
   deals damage only.
 
+### 8.6 Attacking a totem (G06)
+
+A totem is attacked the way a unit is: the attacker is chosen, the totem is
+aimed at, and the attack is the unit's one attack for that turn. What differs:
+
+- **Reach** pays the diagonal surcharge (§8.1.1) and **protection** (§4) has to
+  be open — a totem with a unit in either of its columns cannot be attacked at
+  all, except through a Bypass unit's own column (§4.1).
+- **Arcane units cannot damage totems** at any range (§7.6), so they never have
+  a totem target.
+- **What the hit costs** depends on the totem: health for Life (§5.1), exactly
+  one mana per hit for Mana (§5.2), the attack value in seconds for Time
+  (§5.3).
+- **A pattern does not automatically carry across.** An area on the board is
+  not an area against the back row: the Warrior throws his axe straight ahead
+  and hits one totem, while the Hammerer's hammer keeps flying as it does
+  between units and takes every totem its columns cover, each at full damage.
+  Which it is, is per card (`attack.totem_pattern` in `design/cards/*.json`).
+  The spread itself pays no surcharge (§8.1.1).
+- **Healing a totem** is a card effect and waits for G07.
+
 ## 9. Status effects
 
 Three status effects exist today, plus Protect. They differ in their clock, and
@@ -764,7 +820,7 @@ stat is usually a different kind of thing from the first two.
 |-------|--------|
 | 1 | +1 mana carried over into the next round |
 | 2 | +1 further carry-over (2 total) |
-| 3 | **instead** +1 maximum mana — 7 becomes 8 |
+| 3 | **instead** +1 maximum mana — 10 becomes 11 |
 
 ### Stamina
 
@@ -861,7 +917,7 @@ you are reading this without the folder, the list is the whole of it.
 - 8 fields per side and the single-totem win condition,
 - field biomes,
 - the 12-point stat allocation,
-- the 1–12 value glyph system, replaced by §7.2,
+- `cardgame-ref`'s own 1–12 glyph system, replaced by §7.2 (which since G06 covers the same 1–12 range, read differently),
 - free deckbuilding — the mirror deck replaces it,
 - **the four-way distinction between lethal damage, destroy, move-to-graveyard
   and remove-from-game**, and the graveyard as a zone. Only "destroyed"
@@ -873,8 +929,8 @@ Carried deliberately, to be answered at the gate that needs them
 (see `ROADMAP.md` §2). Referenced by name rather than by number, so that
 answering one does not renumber the rest.
 
-- **Stamina seconds.** Points 1 and 2 restated against 20 s + 10 s; the old
-  20 → 30 → 40 numbers predate the split.
+- **Stamina seconds.** Points 1 and 2 restated against the single block of
+  34 s; the old 20 → 30 → 40 numbers predate it.
 - **Barde.** Is the heal, cleanse and buff an attack replacement, an on-play
   effect, or a per-turn one? Which units count as adjacent?
 - **Taunt precedence.** A unit Taunt forces the three opposing columns onto the
@@ -899,8 +955,10 @@ answering one does not renumber the rest.
 - **Deck size and card pool size.** No fixed minimum or maximum yet.
 - **Tick checkpoints.** Exactly where in the turn and round the poison and burn
   ticks resolve.
-- **The eighth mana point.** How maximum mana of 8 is shown on a totem with
-  seven segments.
+- **The eleventh mana point**, and the sixteenth health step. How Mana Mastery
+  3's extra mana is shown on a ten-segment totem, and how Health Mastery 1's
+  +2 HP is shown on a fourteen-segment one — a segment carrying two steps, or
+  something else.
 
 ## 16. Assets
 
@@ -913,5 +971,6 @@ and the cast — `Rogue`, `Wizard`, `Warrior`, `Sorcerer`, `ArcherF`, `Glavier`,
 The client's copies are synced from there into
 `src/Cardgame.Client/assets/polytools/` (`TASKS.md`, `SYNC-02`).
 
-The exported totems carry 8 (Life), 8 (Mana) and 9 (Time) components — body
-plus 7, 7 and 8 segments, as §5 intends.
+The exported totems carry 15 (Life), 11 (Mana) and 9 (Time) components — body
+plus 14, 10 and 8 segments, as §5 intends. The card carries four glyphs per
+corner, `glyph01` to `glyph04` (§7.2).

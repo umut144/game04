@@ -5,19 +5,24 @@ using Xunit;
 public sealed class GlyphBandsTests
 {
     [Theory]
-    [InlineData(0, "---", 0)]
-    [InlineData(1, "1--", 0)]
-    [InlineData(2, "12-", 0)]
-    [InlineData(3, "123", 0)]
-    [InlineData(4, "--3", 1)]
-    [InlineData(5, "-23", 1)]
-    [InlineData(6, "123", 1)]
-    [InlineData(7, "1--", 2)]
-    [InlineData(8, "12-", 2)]
-    [InlineData(9, "123", 2)]
-    public void ValuesFillFromGlyph01ExceptFourToSixWhichFillFromGlyph03(int value, string pattern, int intensity)
+    [InlineData(0, "----", 0)]
+    [InlineData(1, "1---", 0)]
+    [InlineData(2, "12--", 0)]
+    [InlineData(3, "123-", 0)]
+    [InlineData(4, "1234", 0)]
+    [InlineData(5, "---4", 1)]
+    [InlineData(6, "--34", 1)]
+    [InlineData(7, "-234", 1)]
+    [InlineData(8, "1234", 1)]
+    [InlineData(9, "1---", 2)]
+    [InlineData(10, "12--", 2)]
+    [InlineData(11, "123-", 2)]
+    [InlineData(12, "1234", 2)]
+    public void ValuesFillFromGlyph01ExceptFiveToEightWhichFillFromGlyph04(int value, string pattern, int intensity)
     {
-        string filled = string.Concat(Enumerable.Range(1, 3).Select(g => GlyphBands.IsFilled(value, g) ? g.ToString() : "-"));
+        string filled = string.Concat(Enumerable
+            .Range(1, GlyphBands.BandCount)
+            .Select(g => GlyphBands.IsFilled(value, g) ? g.ToString() : "-"));
 
         Assert.Equal(pattern, filled);
         if (value > 0)
@@ -29,8 +34,8 @@ public sealed class GlyphBandsTests
     [Fact]
     public void OutOfRangeInputIsRefused()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => GlyphBands.IsFilled(10, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => GlyphBands.IsFilled(13, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => GlyphBands.IsFilled(3, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => GlyphBands.IsFilled(3, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => GlyphBands.IsFilled(3, 5));
     }
 }

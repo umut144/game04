@@ -26,4 +26,7 @@ public sealed record AttackDesign
 {
     public int? Range { get; init; }
     public required AttackPattern Pattern { get; init; }
+
+    /// <summary>What the pattern does against totems (§8.6); single by default.</summary>
+    public TotemPattern TotemPattern { get; init; } = TotemPattern.Single;
 }

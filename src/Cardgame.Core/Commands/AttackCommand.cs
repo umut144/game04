@@ -12,4 +12,7 @@ public sealed record AttackCommand : ICommand
     public required PlayerId Player { get; init; }
     public required int AttackerSlot { get; init; }
     public FieldRef? Target { get; init; }
+
+    /// <summary>An opposing totem place instead of a slot (§8.6, G06).</summary>
+    public TotemRef? TotemTarget { get; init; }
 }

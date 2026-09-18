@@ -35,8 +35,9 @@ Layout, once populated:
   card or totem fills, drawn centred. Read by `Cardgame.Assets`
   (`BOARD_DESIGN.md`).
 
-Each card's `attack` holds its reach (`range`) and damage `pattern`
-(G05, `GAME_DESIGN.md` §8.5); the Bard has none.
+Each card's `attack` holds its reach (`range`), its damage `pattern`
+(G05, `GAME_DESIGN.md` §8.5) and, since G06, its `totem_pattern` — whether
+that pattern also spreads along the totem row (§8.6). The Bard has none.
 
 The cards and abilities are G02's first set: rough values to get moving, no
 balance claim (`docs/TASKS.md`, `G02-01`).

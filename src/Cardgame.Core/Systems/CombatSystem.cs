@@ -14,11 +14,22 @@ using Cardgame.Core.Model;
 /// and its tier's Bounty goes to its owner's opponent as Coins (§10), even
 /// when its own side destroyed it. An Arcane attacker refunds 1 mana to its
 /// controller when the attack destroys at least one enemy unit (§7.6).
+///
+/// G06 added the totems as targets (§8.6): a Totem of Life takes the attack
+/// value in health and ends the match at 0, a Totem of Mana loses exactly one
+/// mana per hit — or owes one when it is already empty — and a Totem of Time
+/// loses the attack value in seconds. Taking more seconds than the pool holds
+/// ends the attacker's own turn.
 /// </summary>
 public static class CombatSystem
 {
     public static IEvent Apply(WorldState world, CardCatalog catalog, AttackCommand command)
     {
+        if (world.Outcome is not null)
+        {
+            return Rejected(command, "the match is over");
+        }
+
         if (CombatRules.WhyCannotAttack(world, catalog, command.Player, command.AttackerSlot) is { } reason)
         {
             return Rejected(command, reason);
@@ -28,6 +39,11 @@ public static class CombatSystem
         var attacker = world.Board.Units[attackerId];
         var definition = catalog.CardsById[attacker.DefinitionId];
         var profile = definition.Attack!;
+
+        if (command.TotemTarget is { } totem)
+        {
+            return AttackTotem(world, catalog, command, attackerId, attacker, totem);
+        }
 
         if (profile.NeedsTarget)
         {
@@ -103,6 +119,98 @@ public static class CombatSystem
             Target = profile.NeedsTarget ? command.Target : null,
             Hits = hits,
             ManaRefunded = refund,
+        };
+    }
+
+    // An attack on the totem row (§8.6). Units are untouched: the attack is
+    // aimed at one totem, and only a card that keeps its pattern there
+    // spreads to the totems beside it.
+    private static IEvent AttackTotem(
+        WorldState world,
+        CardCatalog catalog,
+        AttackCommand command,
+        CardInstanceId attackerId,
+        CardInstance attacker,
+        TotemRef totem)
+    {
+        if (!CombatRules.TotemTargets(world, catalog, command.Player, command.AttackerSlot).Contains(totem))
+        {
+            return Rejected(command, $"{totem} is not a target in reach");
+        }
+
+        attacker.HasAttacked = true;
+        var hits = new List<TotemHit>();
+        bool overdamage = false;
+        MatchOutcome? outcome = null;
+
+        foreach (var (target, damage, count) in
+                 CombatRules.AffectedTotems(world, catalog, command.Player, command.AttackerSlot, totem))
+        {
+            var zones = world.Zones(target.Side);
+            var type = world.Board.Side(target.Side).TotemAt(target.Position);
+            int amount = 0;
+            bool over = false;
+            for (int hit = 0; hit < count; hit++)
+            {
+                switch (type)
+                {
+                    case TotemType.Life:
+                        zones.Life.Take(damage);
+                        amount += damage;
+                        break;
+                    case TotemType.Mana:
+                        // One mana per hit, whatever the attack value (§5.2).
+                        zones.Mana.TakeHit();
+                        amount++;
+                        break;
+                    case TotemType.Time:
+                        over |= zones.Time.Take(damage);
+                        amount += damage;
+                        break;
+                }
+            }
+
+            if (type == TotemType.Life)
+            {
+                world.Turn.LastLifeDamageRound = world.Turn.Round;
+                if (zones.Life.IsDestroyed)
+                {
+                    outcome = new MatchOutcome(PlayerIds.Opponent(target.Side), $"{target.Side}'s Totem of Life fell");
+                }
+            }
+
+            overdamage |= over;
+            hits.Add(new TotemHit(target, type, amount, over));
+        }
+
+        if (outcome is not null)
+        {
+            world.Outcome = outcome;
+        }
+
+        // Overdamaging a Totem of Time ends the attacker's own turn: the
+        // seconds taken past 0 are the attacker's, not the defender's (§8.6).
+        TurnStartedEvent? turnEnded = null;
+        if (overdamage && world.Outcome is null)
+        {
+            var ended = TurnSystem.Apply(world, new EndTurnCommand { Player = command.Player });
+            turnEnded = ended as TurnStartedEvent;
+            if (ended is MatchEndedEvent drawn)
+            {
+                outcome = drawn.Outcome;
+            }
+        }
+
+        return new UnitAttackedEvent
+        {
+            Player = command.Player,
+            AttackerSlot = command.AttackerSlot,
+            Attacker = attackerId,
+            TotemTarget = totem,
+            Hits = Array.Empty<Hit>(),
+            TotemHits = hits,
+            TurnEnded = turnEnded,
+            Outcome = outcome,
         };
     }
 

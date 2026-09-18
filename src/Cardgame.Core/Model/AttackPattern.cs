@@ -27,7 +27,7 @@ public enum AttackPattern
 /// what the attack then affects. Reach and affected area are separate on
 /// purpose. <see cref="Range"/> is null for a pattern that takes no target.
 /// </summary>
-public sealed record AttackProfile(int? Range, AttackPattern Pattern)
+public sealed record AttackProfile(int? Range, AttackPattern Pattern, TotemPattern TotemPattern = TotemPattern.Single)
 {
     public bool NeedsTarget => Pattern != AttackPattern.BothFrontRows;
 }

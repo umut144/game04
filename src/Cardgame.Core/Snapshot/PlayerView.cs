@@ -22,8 +22,10 @@ public sealed record PlayerView
     public required IReadOnlyList<CardInstanceId> OpponentDestroyed { get; init; }
     public required PlayerId ActivePlayer { get; init; }
     public required int Round { get; init; }
-    public required int BaseSeconds { get; init; }
-    public required int BonusSeconds { get; init; }
+    /// <summary>Seconds each side's next turn has left to it (§5.3, G06-03).</summary>
+    public required int OwnSeconds { get; init; }
+    public required int OpponentSeconds { get; init; }
+    public required int MaxSeconds { get; init; }
     public bool IsOwnTurn => ActivePlayer == Viewer;
     public required int OwnMana { get; init; }
     public required int OwnCoins { get; init; }
@@ -31,6 +33,15 @@ public sealed record PlayerView
     public required int OwnMaxMana { get; init; }
     public required int OpponentMana { get; init; }
     public required int OpponentMaxMana { get; init; }
+    public required int OwnManaDebt { get; init; }
+    public required int OpponentManaDebt { get; init; }
+    public required int OwnLife { get; init; }
+    public required int OpponentLife { get; init; }
+    public required int MaxLife { get; init; }
+
+    /// <summary>How the match ended, or null while it runs (§5.1).</summary>
+    public MatchOutcome? Outcome { get; init; }
+
     public required BoardSideView OwnBoard { get; init; }
     public required BoardSideView OpponentBoard { get; init; }
 

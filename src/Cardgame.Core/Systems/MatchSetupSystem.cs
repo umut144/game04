@@ -48,10 +48,14 @@ public static class MatchSetupSystem
             }
         }
 
-        if (command.MatchMode.IsMirror())
+        // The first turn of each player is already paid for at setup: the
+        // mirror modes start at the maximum, Constructed at the first round's
+        // one mana (G04-01, G06-02).
+        foreach (var player in new[] { PlayerId.PlayerA, PlayerId.PlayerB })
         {
-            world.PlayerA.Mana.Refill();
-            world.PlayerB.Mana.Refill();
+            var zones = world.Zones(player);
+            zones.Mana.RefillTo(command.MatchMode.IsMirror() ? zones.Mana.Maximum : 1);
+            zones.Time.Refill();
         }
 
         var starter = RollStartingPlayer(command.Seed);

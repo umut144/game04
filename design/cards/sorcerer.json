@@ -7,15 +7,10 @@
     "both_front_rows"
   ],
   "attack": {
-    "pattern": "both_front_rows"
+    "pattern": "both_front_rows",
+    "totem_pattern": "single"
   },
   "tiers": [
-    {
-      "cost": 4,
-      "bounty": 2,
-      "attack": 2,
-      "health": 3
-    },
     {
       "cost": 5,
       "bounty": 3,
@@ -24,9 +19,15 @@
     },
     {
       "cost": 7,
-      "bounty": 5,
+      "bounty": 4,
       "attack": 4,
       "health": 5
+    },
+    {
+      "cost": 9,
+      "bounty": 7,
+      "attack": 5,
+      "health": 7
     }
   ]
 }
