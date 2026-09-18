@@ -236,7 +236,7 @@ public partial class BoardScreen : Control
     private void EndTurn(bool timedOut)
     {
         var result = TurnSystem.Apply(_world, new EndTurnCommand { Player = _world.Turn.ActivePlayer, TimedOut = timedOut });
-        if (result is TurnStartedEvent or MatchEndedEvent)
+        if (result is TurnStartedEvent)
         {
             ClearSelection();
             _bank = 0;
@@ -619,8 +619,7 @@ public partial class BoardScreen : Control
         _debugText.Visible = _debug;
         _debugText.Text =
             $"{_viewer} · round {_view.Round} · seed {_seed} · {_matchMode}\n" +
-            $"clock {_elapsed:0.0}s of {_view.OwnSeconds}{(_paused ? " · PAUSED" : string.Empty)} · " +
-            $"quiet rounds {_view.Round - _world.Turn.LastLifeDamageRound}/{TurnSystem.DrawAfterQuietRounds}\n" +
+            $"clock {_elapsed:0.0}s of {_view.OwnSeconds}{(_paused ? " · PAUSED" : string.Empty)}\n" +
             $"own: life {_view.OwnLife}/{_view.MaxLife}, mana {_view.OwnMana}/{_view.OwnMaxMana} (owed {_view.OwnManaDebt}), " +
             $"time {_view.OwnSeconds}s, hand {_view.OwnHandCount}, deck {_view.OwnDeckCount}, bank {_bank + 1}/2, coins {_view.OwnCoins}\n" +
             $"opponent: life {_view.OpponentLife}/{_view.MaxLife}, mana {_view.OpponentMana}/{_view.OpponentMaxMana} (owed {_view.OpponentManaDebt}), " +
@@ -672,11 +671,12 @@ public partial class BoardScreen : Control
 
                 // Mana counts up from segment01 and is taken off the top;
                 // mana that is owed turns the lowest segments red (§5.2).
-                // A Totem of Life's lost segments fade to a faint red (§5.1).
+                // Life is the other way round: damage empties the totem from
+                // segment01 upwards and the lost segments fade (§5.1).
                 return placement.Type switch
                 {
                     TotemType.Mana => n <= manaDebt ? ManaDebtColour : n <= mana ? lit : fill,
-                    TotemType.Life => n <= life ? lit : fill.Lerp(stroke, 0.18f),
+                    TotemType.Life => n <= _view.MaxLife - life ? fill.Lerp(stroke, 0.18f) : lit,
                     _ => fill,
                 };
             });

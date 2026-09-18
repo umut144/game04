@@ -116,9 +116,6 @@ public sealed class TurnSystemTests
         var seen = new List<int>();
         for (int round = 1; round <= 12; round++)
         {
-            // Keep the quiet-round counter fresh: the draw after eight quiet
-            // rounds is G06-05's rule and has its own test.
-            world.Turn.LastLifeDamageRound = world.Turn.Round;
             Assert.Equal(round, world.Turn.Round);
             seen.Add(world.Zones(starter).Mana.Current);
             EndTurn(world);

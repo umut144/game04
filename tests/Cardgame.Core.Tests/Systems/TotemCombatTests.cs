@@ -139,7 +139,6 @@ public sealed class TotemCombatTests
         Assert.Equal(TotemType.Life, hit.Type);
         Assert.Equal(3, hit.Amount);
         Assert.Equal(11, world.PlayerB.Life.Health);
-        Assert.Equal(world.Turn.Round, world.Turn.LastLifeDamageRound);
         Assert.Null(attacked.Outcome);
 
         world.PlayerB.Life.Take(10);
@@ -221,39 +220,5 @@ public sealed class TotemCombatTests
 
         var single = CombatRules.AffectedTotems(world, Catalog, A, 4, new TotemRef(B, TotemPosition.B));
         Assert.Equal(new[] { TotemPosition.B }, single.Select(hit => hit.Totem.Position));
-    }
-
-    [Fact]
-    public void EightRoundsWithoutDamageToATotemOfLifeEndInADraw()
-    {
-        var world = NewWorld();
-        Put(world, A, 1, "ranger");
-
-        IEvent last = null!;
-        for (int turn = 0; turn < 16; turn++)
-        {
-            last = TurnSystem.Apply(world, new EndTurnCommand { Player = world.Turn.ActivePlayer });
-        }
-
-        var ended = Assert.IsType<MatchEndedEvent>(last);
-        Assert.True(ended.Outcome.IsDraw);
-        Assert.Equal(8, world.Turn.Round);
-        Assert.NotNull(world.Outcome);
-
-        // A hit on a Totem of Life sets the count back to zero.
-        var fresh = NewWorld();
-        Put(fresh, A, 1, "ranger");
-        for (int turn = 0; turn < 8; turn++)
-        {
-            TurnSystem.Apply(fresh, new EndTurnCommand { Player = fresh.Turn.ActivePlayer });
-        }
-
-        Attack(fresh, 1, TotemPosition.A);
-        for (int turn = 0; turn < 8; turn++)
-        {
-            Assert.IsType<TurnStartedEvent>(TurnSystem.Apply(fresh, new EndTurnCommand { Player = fresh.Turn.ActivePlayer }));
-        }
-
-        Assert.Null(fresh.Outcome);
     }
 }

@@ -134,7 +134,7 @@ public partial class CardControl : Control
     private static int? GlyphNumber(string name, string corner) =>
         name.StartsWith(corner + "_glyph0", StringComparison.Ordinal)
         && name.Length == corner.Length + 8
-        && int.TryParse(name.Substring(corner.Length + 7), out int n) && n is >= 1 and <= 3
+        && int.TryParse(name.Substring(corner.Length + 7), out int n) && n >= 1 && n <= GlyphBands.BandCount
             ? n
             : null;
 

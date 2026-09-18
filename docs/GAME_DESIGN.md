@@ -158,18 +158,18 @@ Mastery Stats.
 ### 5.1 Totem of Life — the win condition
 
 Destroying the opponent's Totem of Life wins the match. Each segment is one HP
-step, so the base total is **14**. Health Mastery adds 2 HP for its first
-point (§12), which is the one case where a segment has to carry more than one
-step — how, is open (§15).
+step, so the total is **14**. The 14 segments are what the totem is authored
+with; nothing adds to them while Mastery Stats are parked (§12).
 
-Health counts up from `segment01`; damage takes the highest standing segment
-first. A lost segment does not turn a different colour, it **fades**, leaving
-only a very faint red where it stood.
+Damage empties the totem **from `segment01` upwards**, so the health left
+stands in the highest segments. A lost segment does not turn a different
+colour, it **fades**, leaving only a very faint red where it stood.
 
-A match can also end without a Totem of Life falling: **eight rounds in which
-no Totem of Life takes damage end it in a draw**, counted from the first round
-and reset by any damage to either one. Without it a board that neither side can
-break through has no end (G06-05).
+There is **no draw rule**. G06 tried one — eight rounds in which no Totem of
+Life takes damage — and it was withdrawn after a game: a match that nobody is
+winning is better left running than ended by a clock nobody is playing
+towards. A board neither side can break through therefore has no end of its
+own yet (§15).
 
 ### 5.2 Totem of Mana
 
@@ -189,9 +189,8 @@ from `segment01`. What is owed is missing from the next refill and is then paid
 off — a player who would receive 5 mana with 2 red segments starts their turn
 with 3.
 
-Maximum mana is **10**, and **11** with the third Mana Mastery point. How an
-eleventh point is shown on a ten-segment totem is an open presentation
-question (§15).
+Maximum mana is **10**. The third Mana Mastery point would raise it, but
+Mastery Stats are parked (§12).
 
 ### 5.3 Totem of Time
 
@@ -693,6 +692,8 @@ aimed at, and the attack is the unit's one attack for that turn. What differs:
   Which it is, is per card (`attack.totem_pattern` in `design/cards/*.json`).
   The spread itself pays no surcharge (§8.1.1).
 - **Healing a totem** is a card effect and waits for G07.
+- **A match ends only when a Totem of Life falls.** There is no draw rule
+  (§5.1).
 
 ## 9. Status effects
 
@@ -798,7 +799,14 @@ race. The player with more Speed decides first; after that, first choice
 
 The phase model of `cardgame-ref` (§21 there) is reused largely unchanged.
 
-## 12. Mastery Stats — **EXPERIMENTAL**
+## 12. Mastery Stats — **EXPERIMENTAL, on hold**
+
+**Parked, deliberately, 2026-09-18.** Mastery Stats are a cherry on top: they
+cannot show whether the game is fun, only decorate a game that already is. The
+section below stays as written, and nothing in §3–§11 may assume it. Anything
+it would change — an eleventh mana point, health beyond the totem's 14
+segments, Totemic Taunt, Stamina's seconds — waits with it. Read the numbers
+in it as predating the totems' current segment counts.
 
 The only decision a player makes before the match. **6 points**, distributed
 across **4 stats**, at most **3 points per stat**.
@@ -929,8 +937,8 @@ Carried deliberately, to be answered at the gate that needs them
 (see `ROADMAP.md` §2). Referenced by name rather than by number, so that
 answering one does not renumber the rest.
 
-- **Stamina seconds.** Points 1 and 2 restated against the single block of
-  34 s; the old 20 → 30 → 40 numbers predate it.
+- **Stamina seconds**, and everything else Mastery Stats touch — parked with
+  §12, including the eleventh mana point and any health beyond 14.
 - **Barde.** Is the heal, cleanse and buff an attack replacement, an on-play
   effect, or a per-turn one? Which units count as adjacent?
 - **Taunt precedence.** A unit Taunt forces the three opposing columns onto the
@@ -955,10 +963,8 @@ answering one does not renumber the rest.
 - **Deck size and card pool size.** No fixed minimum or maximum yet.
 - **Tick checkpoints.** Exactly where in the turn and round the poison and burn
   ticks resolve.
-- **The eleventh mana point**, and the sixteenth health step. How Mana Mastery
-  3's extra mana is shown on a ten-segment totem, and how Health Mastery 1's
-  +2 HP is shown on a fourteen-segment one — a segment carrying two steps, or
-  something else.
+- **How a match ends that nobody is winning.** The draw after eight quiet
+  rounds was tried in G06 and withdrawn (§5.1); nothing replaces it yet.
 
 ## 16. Assets
 

@@ -14,14 +14,10 @@ using Cardgame.Core.Zones;
 /// maximum in the mirror modes, the round of their next turn up to the
 /// maximum in Constructed, unspent mana lost either way. Both totems
 /// therefore stand full through the opponent's turn, which is what makes
-/// attacking them worth anything. Eight rounds without damage to a Totem of
-/// Life end the match in a draw (§5.1).
+/// attacking them worth anything.
 /// </summary>
 public static class TurnSystem
 {
-    /// <summary>Rounds without damage to a Totem of Life that end in a draw (G06-05).</summary>
-    public const int DrawAfterQuietRounds = 8;
-
     public static IEvent Apply(WorldState world, EndTurnCommand command)
     {
         if (world.Outcome is not null)
@@ -44,14 +40,6 @@ public static class TurnSystem
         var next = PlayerIds.Opponent(command.Player);
         if (next == world.Turn.StartingPlayer)
         {
-            if (world.Turn.Round - world.Turn.LastLifeDamageRound >= DrawAfterQuietRounds)
-            {
-                var outcome = new MatchOutcome(
-                    null, $"{DrawAfterQuietRounds} rounds without damage to a Totem of Life");
-                world.Outcome = outcome;
-                return new MatchEndedEvent { Outcome = outcome };
-            }
-
             world.Turn.Round++;
         }
 

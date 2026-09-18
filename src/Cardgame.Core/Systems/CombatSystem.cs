@@ -170,13 +170,9 @@ public static class CombatSystem
                 }
             }
 
-            if (type == TotemType.Life)
+            if (type == TotemType.Life && zones.Life.IsDestroyed)
             {
-                world.Turn.LastLifeDamageRound = world.Turn.Round;
-                if (zones.Life.IsDestroyed)
-                {
-                    outcome = new MatchOutcome(PlayerIds.Opponent(target.Side), $"{target.Side}'s Totem of Life fell");
-                }
+                outcome = new MatchOutcome(PlayerIds.Opponent(target.Side), $"{target.Side}'s Totem of Life fell");
             }
 
             overdamage |= over;
@@ -193,12 +189,7 @@ public static class CombatSystem
         TurnStartedEvent? turnEnded = null;
         if (overdamage && world.Outcome is null)
         {
-            var ended = TurnSystem.Apply(world, new EndTurnCommand { Player = command.Player });
-            turnEnded = ended as TurnStartedEvent;
-            if (ended is MatchEndedEvent drawn)
-            {
-                outcome = drawn.Outcome;
-            }
+            turnEnded = TurnSystem.Apply(world, new EndTurnCommand { Player = command.Player }) as TurnStartedEvent;
         }
 
         return new UnitAttackedEvent

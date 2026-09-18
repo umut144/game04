@@ -13,10 +13,4 @@ public sealed class TurnState
 
     /// <summary>1 from the first turn on; 0 before the match has started.</summary>
     public int Round { get; internal set; }
-
-    /// <summary>
-    /// The last round in which a Totem of Life took damage; 0 while none has.
-    /// Eight quiet rounds end the match in a draw (§5.1, G06-05).
-    /// </summary>
-    public int LastLifeDamageRound { get; internal set; }
 }

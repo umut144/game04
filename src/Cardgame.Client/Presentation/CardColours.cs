@@ -6,7 +6,7 @@ namespace Cardgame.Client.Presentation;
 
 /// <summary>
 /// The value language on the card (GAME_DESIGN.md §7.1, §7.2): each corner
-/// wedge has three glyphs, and <see cref="GlyphBands"/> says which of them a
+/// wedge has four glyphs, and <see cref="GlyphBands"/> says which of them a
 /// value fills; they take the value's intensity of its colour family. Colours are
 /// chosen here for G02 and move to design/ once they need tuning.
 /// </summary>
@@ -51,7 +51,8 @@ public static class CardColours
         corner = string.Empty;
         glyph = 0;
         int at = name.IndexOf("_glyph0", System.StringComparison.Ordinal);
-        if (at <= 0 || at + 8 != name.Length || !int.TryParse(name.Substring(at + 7), out int number) || number is < 1 or > 3)
+        if (at <= 0 || at + 8 != name.Length || !int.TryParse(name.Substring(at + 7), out int number)
+            || number < 1 || number > GlyphBands.BandCount)
         {
             return false;
         }
