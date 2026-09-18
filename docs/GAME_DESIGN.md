@@ -278,10 +278,11 @@ medium + 1..4 bands = 5, 6, 7, 8      filled from band 4 towards band 1
 dark   + 1..4 bands = 9, 10, 11, 12   filled from band 1 towards band 4
 ```
 
-The fill direction alternates with the intensity, so a light 2 and a medium 6
-look different even where their colours are close. In the card asset band 1 is
-`glyph01`, the largest and outermost, and band 4 is `glyph04`, the small one in
-the corner. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
+Counting starts in the corner: band 1 is `glyph04`, the small band in the very
+corner of the card, and band 4 is `glyph01`, the largest and outermost. A value
+grows outwards from the corner, and the fill direction alternates with the
+intensity, so a light 2 and a medium 6 look different even where their colours
+are close. A value of 0 is an empty wedge. The band structure stays visible when unfilled,
 so the player reads "empty" rather than "missing". Reference:
 `concepts/diegetic_examples/attack-power-example/`.
 
