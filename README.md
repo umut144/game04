@@ -99,5 +99,3 @@ It is a card game that is meant to be fun. It is also a second attempt: the firs
 - The sketches in `concepts/` are hand-drawn by the author.
 - Engine: [Godot](https://godotengine.org/) (MIT).
 - Licence: proprietary, all rights reserved. The repository is public so it can be read; using, copying or redistributing it needs written permission. See [`LICENSE`](LICENSE).
-
-[`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md) are working instructions for AI coding agents used in this project.

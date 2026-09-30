@@ -45,3 +45,7 @@ export_presets.cfg
 # _to_delete/ is deliberately NOT ignored: it stays untracked but visible, so
 # that it shows up in `git status` and gets emptied with `trash` at the end of
 # the day. Never stage it.
+
+# --- agent instructions (local working notes, not part of the published repo) ---
+AGENTS.md
+CLAUDE.md
